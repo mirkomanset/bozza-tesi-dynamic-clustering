@@ -1,0 +1,35 @@
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm and 2cm, every node/.style={font=\small}]
+        % Nodes
+        \node (stream) [diamond, draw, minimum height=0.1cm, minimum width=5cm, above, inner sep=0pt] {Streaming Data};
+
+        \node (online) [rectangle, draw, rounded corners, text centered, minimum height=1cm, below=2cm of stream] {\shortstack{Online\\(Microclustering)}};
+
+        \node (offline) [rectangle, draw, rounded corners, text centered, minimum height=1cm, below=of online] {\shortstack{Offline\\(Macroclustering)}};
+
+        \node (trigger) [rectangle, draw, rounded corners, text centered, minimum height=1cm, right=of online] {Triggering Strategy};
+
+        \node (tracking) [rectangle, draw, rounded corners, text centered, minimum height=1cm, below=of offline] {Tracking};
+
+        \node (history) [ellipse, draw, text centered, minimum height=1cm, left=of tracking] {History};
+
+        \node (report) [diamond, draw, text centered, minimum height=1cm, minimum width=4cm, below=2cm of tracking] {Report};
+
+        % Arrows
+        \draw[thick,->,>=stealth] (stream) -- (online);
+        \draw[thick,->,>=stealth] (online) -- (offline);
+        \draw[thick,->,>=stealth] (trigger) |- (offline);
+        \draw[thick,->,>=stealth] (offline) -- (tracking);
+        \draw[thick,->,>=stealth] (offline) -| (history);
+        \draw[thick,->,>=stealth] (history) -- (tracking);
+        \draw[thick,->,>=stealth] (tracking) -- (report);
+
+        % Box
+        \node[draw, dashed, inner sep=10pt, fit=(online)(offline)(trigger), label=above right:Streaming Clustering] {};
+        \node[draw, dashed, inner sep=45pt, fit=(online)(offline)(trigger)(history)(tracking), label=below left:Dynamic Clustering] {};
+
+    \end{tikzpicture}
+    \caption{Proposed architecture for the dynamic clustering framework.}
+    \label{fig:architecture}
+\end{figure}

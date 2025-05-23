@@ -1,0 +1,47 @@
+# Compiled PDF
+*.pdf
+
+# LaTeX intermediate files
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fls
+*.fdb_latexmk
+*.log
+*.nav
+*.out
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+*.lof
+*.lot
+
+# Editor-specific files
+*.swp
+*~
+.#*
+*.bak
+
+# TeXShop / TeXworks / Overleaf
+*.synctex.gz
+*.synctex.gz(busy)
+
+# latexmk and arara
+latexmkrc
+*.dvi
+
+# auto-generated files from glossary/nomenclature
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+*.nlo
+*.nls
+
+# Poli-images
+*.eps

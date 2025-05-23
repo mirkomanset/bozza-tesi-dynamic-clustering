@@ -1,0 +1,176 @@
+\chapter{Problem formulation}\label{ch:problem_formulation}
+
+\section{Streaming Clustering}\label{sec:prob_streaming_clustering}
+A \textit{data stream} is a potentially infinite sequence of multi-dimensional
+data points:
+\[
+    \chi = \{x^t\}_{t=1}^{\infty}, \quad x^t \in \mathbb{R}^n
+\]
+where $x^t$ denotes the $n$-dimensional observation received at timestamp $t$.
+Due to the unbounded nature of data streams and limited memory or computation
+constraints, traditional batch clustering methods are not applicable in this
+setting.
+
+The goal of streaming clustering is to partition the incoming data points into
+groups in a timely and resource-efficient manner. At any given time $t$, a
+clustering algorithm processes the stream incrementally and produces a
+clustering result:
+\[
+    C^t = \{c_1^t, c_2^t, \dots, c_{k^t}^t\}
+\]
+where:
+\begin{itemize}
+    \item $C^t$ denotes the clustering obtained at time $t$,
+    \item $k^t$ is the number of clusters at time $t$,
+    \item $c_i^t$ is the $i$-th cluster at time $t$, defined as a subset of data
+          points observed up to time $t$.
+\end{itemize}
+
+Streaming clustering methods must satisfy the following constraints:
+
+\begin{enumerate}
+    \item \textbf{Incrementality:} The algorithm must be able to update the clustering
+          with each new incoming data point or small batch, without access to the full
+          historical data.
+
+    \item \textbf{Bounded Memory:} The algorithm must operate within limited memory,
+          often without storing all previous data points.
+
+    \item \textbf{Computational Efficiency:} The algorithm must produce clustering
+          updates within tight time constraints to maintain real-time responsiveness.
+
+    \item \textbf{Adaptability:} The algorithm should be capable of handling non-stationary
+          data distributions, as the characteristics of the stream may change over time.
+\end{enumerate}
+
+At each time step, the algorithm processes new data and outputs an updated
+clustering $C^t$. The clustering may change significantly over time due to
+drift, noise, or the arrival of new patterns in the stream.
+
+\section{Tracking Clusters}\label{sec:prob_tracking_clusters}
+In non-stationary data streams, clustering structures evolve over time due to
+changes in the underlying data distribution. Consequently, the clustering model
+$C^t$ at time $t$ may differ substantially from $C^\tau$ at a later time $\tau
+    > t$. To analyze such dynamics, it is essential to model and track how
+individual clusters change across time.
+
+Given a sequence of clustering models $\{C^0, C^1, \dots, C^T\}$ over time,
+where each $C^t = \{c_1^t, \dots, c_{k_t}^t\}$ represents a set of clusters at
+time $t$, the goal is to identify and categorize transitions between clusters
+over time.
+
+Clusters may undergo several types of transitions:
+
+\begin{itemize}
+    \item Appearance: A new cluster is formed that did not exist previously.
+    \item Disappearance: A previously existing cluster ceases to exist.
+    \item Split: A single cluster divides into multiple clusters.
+    \item Merge: Multiple clusters combine into a single cluster.
+    \item Survival: A cluster remains relatively unchanged over time.
+\end{itemize}
+
+To formally define cluster transitions, it is necessary to introduce the notion
+of \emph{overlap} between clusters at different timestamps. Given a cluster $
+    c_i^t \in C^t $ and a cluster $ c_j^\tau \in C^\tau $, with $ t < \tau $, these
+clusters are said to \emph{overlap}, denoted as
+\[
+    c_i^t \circledast c_j^\tau,
+\]
+if they exhibit a non-negligible intersection, as determined by the underlying
+cluster representation. The precise definition of overlap depends on the chosen
+cluster model. Common examples include:
+
+\begin{itemize}
+    \item \textbf{Enumeration-based Representation:}
+          \[
+              c_i^t \circledast c_j^\tau \iff \exists x \in \mathbb{R}^n \text{ such that } x \in c_i^t \land x \in c_j^\tau,
+          \]
+          indicating that the two clusters share at least one common data point.
+
+    \item \textbf{Spherical Model Representation:}
+          \[
+              c_i^t \circledast c_j^\tau \iff d(\vec{\mu}_i^t, \vec{\mu}_j^\tau) \leq r_i^t + r_j^\tau,
+          \]
+          where $ \vec{\mu}_i^t $ and $ \vec{\mu}_j^\tau $ denote the centroids of
+          clusters $ c_i^t $ and $ c_j^\tau $, respectively, $ r_i^t $ and $ r_j^\tau $
+          are their radii, and $ d(\cdot, \cdot) $ is the Euclidean distance.
+\end{itemize}
+
+The following table summarizes the formal definitions of typical cluster
+transitions based on the concept of overlap:
+
+\begin{table}[H]
+    \centering
+    {\small
+        \begin{tabular}{|l|c|p{9cm}|}
+            \hline
+            \textbf{Transition} & \textbf{Notation}                                 & \textbf{Formal Definition}                                                                            \\
+            \hline
+            Appearance          & $\emptyset \rightarrow c_j^\tau$                  &
+            $\nexists c_i^t \in C^t: c_i^t \circledast c_j^{\tau}$                                                                                                                          \\
+            \hline
+            Disappearance       & $c_i^t \rightarrow \emptyset$                     & $\nexists c_j^{\tau} \in C^{\tau}: c_i^t \circledast c_j^{\tau}$                                      \\
+            \hline
+            Split               & $c_i^t \rightarrow \{c_1^\tau, \dots, c_v^\tau\}$ & $\exists\, 1 \leq j \leq v: c_i^t \circledast c_j^\tau \land \dots \land c_i^t \circledast c_v^\tau $ \\
+            \hline
+            Merge               & $\{c_1^t, \dots, c_u^t\} \rightarrow c_j^\tau$    & $\exists\, 1 \leq i \leq u: c_i^t \circledast c_j^\tau \land \dots \land c_u^t \circledast c_j^\tau $ \\
+            \hline
+            Survival            & $c_i^t \rightarrow c_j^\tau$                      & $c_i^t \circledast c_j^\tau \land
+                \nexists\, c_u^t \in C^t \setminus \{c_i^t\}: c_u^t \circledast c_j^\tau \land
+            \nexists\, c_v^\tau \in C^\tau \setminus \{c_j^\tau\}: c_i^t \circledast c_v^\tau$                                                                                              \\
+            \hline
+        \end{tabular}
+    }
+    \caption{Formal definitions of cluster transitions}
+    \label{table:cluster_transitions}
+\end{table}
+
+Tracking clusters in dynamic streaming environments presents several key
+challenges. One of the foremost difficulties is dealing with concept drift and
+evolution, where the underlying data distribution may shift gradually or
+abruptly, causing clusters to move, emerge, disappear, merge, or split in
+complex and unpredictable ways. The presence of noise and outliers further
+complicates the problem by potentially masking genuine cluster transitions or
+generating false alarms. Ambiguities often arise when clusters overlap or lie
+in close proximity, making it challenging to precisely define cluster
+correspondences and detect transitions accurately. Finally, the absence of
+ground truth labels in streaming contexts makes it difficult to evaluate the
+correctness of detected transitions and adapt algorithms to evolving cluster
+structures.
+
+\section{Dynamic Clustering}\label{sec:dynamic_clustering}
+
+Dynamic clustering aims to provide a holistic framework for understanding and
+responding to the evolution of data distributions in non-stationary
+environments. By combining streaming clustering with temporal cluster tracking,
+it enables both real-time analysis and retrospective insight into how clusters
+emerge, change, and disappear over time.
+
+The objective is not only to cluster incoming data efficiently, but also to
+interpret and explain the structural changes in the data. This is particularly
+valuable in applications where understanding data dynamics is as important as
+making accurate predictions or decisions.
+
+Dynamic clustering supports a range of analytical goals, including:
+
+\begin{itemize}
+    \item \textbf{Drift Explainability:} By analyzing the history and transformation of
+          clusters, one can identify when and how concept drift occurs, and potentially
+          relate it to changes in user behavior, system state, or external conditions.
+
+    \item \textbf{Concept Monitoring and Lifecycle Analysis:} Tracking clusters over time
+          provides a basis for monitoring the emergence, evolution, and retirement of
+          underlying concepts or patterns in the data.
+
+    \item \textbf{Anomaly and Event Detection:} Sudden transitions—such as abrupt merges,
+          splits, or disappearances—can signal significant events or anomalies in the data stream,
+          such as system faults or behavioral shifts.
+
+    \item \textbf{Interpretability and Visualization:} Visualizing cluster evolution as
+          trajectories, trees, or timelines helps domain experts make sense of complex temporal
+          dynamics in an intuitive manner.
+\end{itemize}
+
+By treating clustering as a dynamic process rather than a static task, this
+framework enables richer, more actionable insights in data-driven systems that
+operate under change.

@@ -1,0 +1,100 @@
+\chapter{Method}\label{ch:method}
+
+As described in MEC, an effective way to visualize the transitions between two
+clustering results is by using a bipartite graph, where each node represents a
+cluster at a specific time point, and edges represent overlaps between clusters
+across the two time steps. In this representation, each transition can be
+characterized by its origin cluster(s), destination cluster(s), and the
+corresponding transition type.
+
+\input{figures/graph_transitions}
+
+To enable a precise and granular analysis, transitions such as splits and
+merges are decomposed into atomic transitions that associate individual source
+clusters with their respective destination clusters, or vice versa.
+
+\input{figures/graph_transitions_atomic}
+
+Transitions between clusters can be characterized by analyzing the number of
+edges connected to each node in the bipartite graph representation of
+clustering results at times $ t $ and $ \tau $. Specifically:
+
+\begin{itemize}
+    \item For a cluster node at time $ t $:
+          \begin{itemize}
+              \item If it has no outgoing edges, the cluster is considered to have
+                    \emph{disappeared}.
+              \item If it has two or more outgoing edges, the cluster has undergone a \emph{split}.
+          \end{itemize}
+    \item For a cluster node at time $ \tau $:
+          \begin{itemize}
+              \item If it has no incoming edges, the cluster is considered to have \emph{appeared}.
+              \item If it has two or more incoming edges, the cluster is the result of a
+                    \emph{merge}.
+          \end{itemize}
+\end{itemize}
+
+When a cluster node at either time $ t $ or time $ \tau $ is connected to
+exactly one node at the other time point (i.e., has exactly one incident edge),
+the type of transition cannot be determined solely based on that edge. In these
+cases, additional context is required to disambiguate the type of transition.
+
+\begin{itemize}
+    \item From the perspective of time $ t $: If a cluster at time $ t $ has exactly one
+          outgoing edge to a cluster at time $ \tau $, then:
+          \begin{itemize}
+              \item If the corresponding cluster at time $ \tau $ also has exactly one incoming
+                    edge, the transition is a \emph{survival}.
+              \item If the corresponding cluster at time $ \tau $ has more than one incoming edge,
+                    the cluster at time $ t $ has merged with others into a single cluster.
+          \end{itemize}
+
+    \item From the perspective of time $ \tau $: If a cluster at time $ \tau $ has
+          exactly one incoming edge from a cluster at time $ t $, then:
+          \begin{itemize}
+              \item If the originating cluster at time $ t $ also has only one outgoing edge, the
+                    transition is a \emph{survival}.
+              \item If the originating cluster at time $ t $ has more than one outgoing edge, it
+                    has split into multiple clusters.
+          \end{itemize}
+\end{itemize}
+
+When neither of the above conditions holds (i.e., a node at time $ t $ with one
+edge connects to a node at time $ \tau $ that also participates in other
+connections), the transition may involve both merging and splitting, which we
+refer to as a \textbf{mergesplit}.
+
+\input{figures/mergesplit_example}
+
+Up to this point, the discussed transitions have focused on comparisons between
+clusters from two consecutive timestamps, capturing short-term structural
+changes. However, to achieve more comprehensive tracking across longer time
+horizons, it is beneficial to introduce three additional types of transitions
+that account for recurring cluster behaviors: \textbf{reappearance},
+\textbf{resplit}, and \textbf{remerge}.
+
+\textbf{Reappearance} describes the event where a previously disappeared cluster
+re-emerges at a later timestamp. To support the detection of this transition,
+statistical information about disappeared clusters is stored. When a new cluster
+appears in a future iteration, it is compared against the set of previously
+disappeared clusters. If a significant overlap is found, the transition is
+categorized as a reappearance rather than a new appearance.
+
+\textbf{Remerge} refers to a scenario in which a cluster, originally formed by
+the merging of multiple clusters, undergoes a subsequent split. In such cases,
+information about the original merged components is preserved. If, at a later point,
+the resulting clusters show sufficient overlap with the initially merged clusters,
+the transition is identified as a remerge.
+
+\textbf{Resplit} represents the inverse case, where clusters that were previously
+the result of a split later merge again. The identities of the components resulting
+from the original split are stored, and if these components recombine into a cluster
+that significantly overlaps with the original one, the transition is recorded as a
+resplit.
+
+By incorporating these extended transition types, the tracking framework gains
+the ability to identify not only immediate transformations but also long-term
+structural recurrences, enabling a more nuanced understanding of cluster
+evolution.
+
+\input{figures/architecture.tex}
