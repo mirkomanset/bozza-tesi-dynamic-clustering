@@ -1,15 +1,15 @@
 \chapter{Background}\label{ch:background}
 
-\section{State of the Art in Streaming Clustering}\label{sec:sota_streaming_clustering}
+\section{Streaming Clustering Algorithms}\label{sec:streaming_clustering_algorithms}
 
 Streaming clustering algorithms are designed to handle continuously arriving
 data streams efficiently while adapting to changes in the underlying data
 distribution. Unlike traditional batch clustering methods, streaming clustering
 must operate under constraints such as limited memory, the impossibility of
-revisiting old data, and the need for real-time processing. The main categories
-of streaming clustering algorithms, which extend concepts from batch
-clustering, are: hierarchical, partitioning-based, density-based, grid-based,
-and model-based methods.
+revisiting old data, and the need for real-time processing. As discussed by
+Zubaroglu et Atalay~\cite{streaming_clustering_review}, the main categories of
+streaming clustering algorithms are: hierarchical,
+partitioning-based, density-based, grid-based, and model-based methods.
 
 \textbf{Hierarchical streaming clustering} algorithms produce nested clusters organized
 in a tree-like structure called a dendrogram, which offers a rich and interpretable
@@ -19,7 +19,7 @@ each data point as a separate cluster and iteratively merge clusters based on si
 whereas divisive algorithms begin with all data points in a single cluster and recursively
 split them. Although hierarchical methods provide detailed cluster structures, their high
 computational complexity and sensitivity to noise and outliers make them less suitable for
-high-velocity data streams. Examples include \textsc{BIRCH} and \textsc{HUE-Stream}.
+high-velocity data streams. Examples include \textsc{BIRCH}~\cite{birch} and \textsc{HUE-Stream}.
 
 \textbf{Partitioning-based streaming algorithms} divide data into a predefined number of clusters
 by optimizing an objective function, commonly based on distance measures to cluster centroids. They
@@ -170,7 +170,7 @@ To support temporal analysis, CluStream maintains snapshots of micro-cluster
 sets at different time granularities. This forms a pyramidal pattern, trading
 off between storage space and temporal resolution.
 
-\section{State of the Art in Tracking Clusters}\label{sec:sota_tracking_clusters}
+\section{Tracking Clusters Algorithms}\label{sec:tracking_clusters_algorithms}
 
 The challenge of tracking evolving clustering structures in non-stationary data
 streams has garnered increasing attention, leading to the development of
@@ -213,9 +213,9 @@ successive time points.
 \textsc{MONIC} (Spiliopoulou et al.~\cite{monic}) is a seminal heuristic framework that uses an overlap
 matrix $O_{ij}$ between clusters $X_i$ at $t$ and $Y_j$ at $\tau > t$.
 The overlap matrix is defined as:
-\[
+\begin{equation}
     O_{ij} = \frac{|X_i \cap Y_j|}{|X_i|}, \quad i = 1, \ldots, k_1, \quad j = 1, \ldots, k_2.
-\]
+\end{equation}
 
 Transitions are categorized as:
 \begin{itemize}
@@ -241,38 +241,38 @@ definitions. MONIC+ supports three distinct types of clusters based on how they 
           metric space, these clusters are defined by their geometric properties (e.g.,
           spheres in k-means). Cluster transitions are observed as geometric
           transformations over time.
-          \[
+          \begin{equation}
               \text{overlap}(X,Y) = \frac{\text{area}(X \cap Y)}{\text{area}(X)}
-          \]
+          \end{equation}
     \item Type B1 Clusters (Set-based Clusters): These clusters are defined extensionally
           as sets of data records without relying on a fixed metric space. Algorithms
           like hierarchical clustering fall under this category. The data-dependent
           nature of the metric space means that adding a new point can affect cluster
           boundaries indirectly.
-          \[
+          \begin{equation}
               \text{overlap}(X,Y) = \frac{\sum_{a \in X \cap Y} \text{age}(a, t_j)}{\sum_{a \in X} \text{age}(a, t_j)}
-          \]
+          \end{equation}
     \item Type B2 Clusters (Distribution-based Clusters): Clusters here are defined
           intensionally as statistical distributions. A cluster $X$ is characterized by
           its cardinality $\text{card}(X)$, mean $\mu(X)$, and standard deviation
           $\sigma(X)$. The Expectation-Maximization (EM) algorithm is a typical example.
-          \[
+          \begin{equation}
               \text{overlap}(X, Y) =
               \begin{cases}
                   1 - \dfrac{|\mu(X) - \mu(Y)|}{\sigma(X)} & \text{if } |\mu(X) - \mu(Y)| \leq \sigma(X) \\
                   0                                        & \text{otherwise}
               \end{cases}
-          \]
+          \end{equation}
 \end{itemize}
 
 \textsc{MClusT} (Oliveira and Gama~\cite{mclust}) extends MONIC by representing transitions via a
 bipartite graph weighted by conditional probabilities between clusters over time.
 This probabilistic approach refines the detection of transitions and facilitates intuitive
 visualization of merges and splits.
-\[
+\begin{equation}
     \text{weight}(C_u, C_m) = P(X \in C_u(t_j) \mid X \in C_m(t_i)) =
     \frac{\sum_{m=1}^p P(X \in C_m(t_i) \cap C_u(t_j))}{\sum_{m=1}^p P(X \in C_m(t_i))}
-\]
+\end{equation}
 
 \textsc{MEC} (Oliveira and Gama~\cite{mec}) introduces an alternative bipartite-graph-based visualization
 tool, emphasizing structural comparison of clusters at static intervals. It uses conditional
@@ -284,9 +284,9 @@ with clustering accuracy at each time point. Chakrabarti et al.~\cite{evolutiona
 introduced the evolutionary clustering framework, in which the objective is to compute clustering
 solutions $C_t$ for each time step $t$ that are both representative of the current data snapshot
 and consistent with past clusterings. The trade-off is formalized as:
-\[
+\begin{equation}
     \sum_{t=1}^T sq(C_t, M_t) - cp \sum_{t=2}^T hc(C_{t-1}, C_t)
-\]
+\end{equation}
 
 Here, $sq$ represents snapshot quality, $hc$ denotes history cost, and $cp$ is
 a change penalty. Transitions such as \textit{survival} and \textit{small
@@ -297,9 +297,9 @@ snapshot quality.
 
 Chi et al.~\cite{spectral_evolutionary_clustering} extended this approach via
 evolutionary spectral clustering, optimizing a cost of the form:
-\[
+\begin{equation}
     C_{total} = \alpha C_{temporal} + (1-\alpha)C_{snapshot}
-\]
+\end{equation}
 
 Zhang et al.~\cite{density_evolutionary_clustering} adapted the framework for
 density-based clustering (evolutionary DBSCAN) using a similar cost function.
@@ -312,7 +312,7 @@ evolutionary framework that updates proximity matrices recursively. This
 supports continuous tracking of survival, gradual merges, or splits, but the
 approach is computationally intensive and NP-hard in general.
 
-\section{State of the Art in Dynamic Clustering}
+\section{Dynamic Clustering Algorithms}\label{sec:dynamic_clustering_algorithms}
 
 In recent years, several works have been proposed to address the dynamic
 clustering problem by integrating streaming clustering and cluster evolution

@@ -1,100 +1,302 @@
 \chapter{Method}\label{ch:method}
 
-As described in MEC, an effective way to visualize the transitions between two
-clustering results is by using a bipartite graph, where each node represents a
-cluster at a specific time point, and edges represent overlaps between clusters
-across the two time steps. In this representation, each transition can be
-characterized by its origin cluster(s), destination cluster(s), and the
-corresponding transition type.
+This chapter presents a novel framework for addressing the dynamic clustering
+problem. It begins with the introduction of a new class of transitions that
+incorporates the recurrence of specific cluster evolutions over time, enabling
+a more realistic modeling of evolving data streams. A new formulation of
+overlapping scores is then proposed for both spherical and Gaussian clusters,
+allowing for a more precise quantification of cluster overlap. In addition, a
+triggering mechanism based on the CluStream micro-clustering algorithm is
+introduced to detect significant structural changes in the data. The chapter
+concludes with a detailed description of the framework's architecture,
+outlining its components and their interactions in supporting adaptive and
+interpretable streaming clustering.
+
+\section{Extended Transitions}\label{sec:extended_transitions}
+
+To more accurately capture the dynamic evolution of clusters over time, this
+section introduces an extension to the traditional notion of transitions.
+Instead of relying solely on pairwise comparisons or aggregate statistics,
+transitions are modeled using a structured and interpretable representation. As
+described in MEC, one effective approach is to represent transitions between
+two clustering results as a \textbf{bipartite graph}. In this graph, each node
+represents a cluster at a specific time point, and edges indicate the degree of
+overlap between clusters across two consecutive timestamps.
+
+This representation enables a principled framework for identifying and
+classifying transition patterns. Each edge encodes a correspondence between
+clusters, allowing the system to categorize transitions such as
+\emph{survivals}, \emph{splits}, \emph{merges}, \emph{appearances}, and
+\emph{disappearances}, based on the edge connectivity patterns. The resulting
+graph-based model facilitates a more expressive and insightful analysis of
+cluster evolution.
 
 \input{figures/graph_transitions}
 
-To enable a precise and granular analysis, transitions such as splits and
-merges are decomposed into atomic transitions that associate individual source
-clusters with their respective destination clusters, or vice versa.
+To support fine-grained tracking and avoid ambiguity in complex transitions,
+events such as merges and splits are decomposed into \textbf{atomic
+      transitions}. Each atomic transition links a single source cluster to a
+destination cluster (or vice versa), enabling a clearer interpretation of
+compound transitions.
 
 \input{figures/graph_transitions_atomic}
 
-Transitions between clusters can be characterized by analyzing the number of
-edges connected to each node in the bipartite graph representation of
-clustering results at times $ t $ and $ \tau $. Specifically:
+The classification of transitions relies on analyzing the degree of
+connectivity (i.e., number of incident edges) for each node in the bipartite
+graph constructed between clustering results at times $t$ and $\tau$:
 
 \begin{itemize}
-    \item For a cluster node at time $ t $:
-          \begin{itemize}
-              \item If it has no outgoing edges, the cluster is considered to have
-                    \emph{disappeared}.
-              \item If it has two or more outgoing edges, the cluster has undergone a \emph{split}.
-          \end{itemize}
-    \item For a cluster node at time $ \tau $:
-          \begin{itemize}
-              \item If it has no incoming edges, the cluster is considered to have \emph{appeared}.
-              \item If it has two or more incoming edges, the cluster is the result of a
-                    \emph{merge}.
-          \end{itemize}
+      \item \textbf{At time $t$}:
+            \begin{itemize}
+                  \item A cluster with no outgoing edges is labeled as \emph{disappeared}.
+                  \item A cluster with multiple outgoing edges is considered to have undergone a
+                        \emph{split}.
+            \end{itemize}
+
+      \item \textbf{At time $\tau$}:
+            \begin{itemize}
+                  \item A cluster with no incoming edges is marked as \emph{newly appeared}.
+                  \item A cluster with multiple incoming edges is the result of a \emph{merge}.
+            \end{itemize}
 \end{itemize}
 
-When a cluster node at either time $ t $ or time $ \tau $ is connected to
-exactly one node at the other time point (i.e., has exactly one incident edge),
-the type of transition cannot be determined solely based on that edge. In these
-cases, additional context is required to disambiguate the type of transition.
+When a cluster node at either time $t$ or $\tau$ has exactly one connecting
+edge, the nature of the transition cannot be inferred directly from the graph
+structure alone. In such cases, additional context is needed to disambiguate:
 
 \begin{itemize}
-    \item From the perspective of time $ t $: If a cluster at time $ t $ has exactly one
-          outgoing edge to a cluster at time $ \tau $, then:
-          \begin{itemize}
-              \item If the corresponding cluster at time $ \tau $ also has exactly one incoming
-                    edge, the transition is a \emph{survival}.
-              \item If the corresponding cluster at time $ \tau $ has more than one incoming edge,
-                    the cluster at time $ t $ has merged with others into a single cluster.
-          \end{itemize}
+      \item \textbf{From time $t$ to $\tau$}:
+            \begin{itemize}
+                  \item If the destination cluster has only one incoming edge, the transition is a
+                        \emph{survival}.
+                  \item If the destination cluster has multiple incoming edges, the source cluster has
+                        \emph{merged} with others.
+            \end{itemize}
 
-    \item From the perspective of time $ \tau $: If a cluster at time $ \tau $ has
-          exactly one incoming edge from a cluster at time $ t $, then:
-          \begin{itemize}
-              \item If the originating cluster at time $ t $ also has only one outgoing edge, the
-                    transition is a \emph{survival}.
-              \item If the originating cluster at time $ t $ has more than one outgoing edge, it
-                    has split into multiple clusters.
-          \end{itemize}
+      \item \textbf{From time $\tau$ to $t$}:
+            \begin{itemize}
+                  \item If the originating cluster has only one outgoing edge, the transition is a
+                        \emph{survival}.
+                  \item If the originating cluster has multiple outgoing edges, it has \emph{split}.
+            \end{itemize}
 \end{itemize}
 
-When neither of the above conditions holds (i.e., a node at time $ t $ with one
-edge connects to a node at time $ \tau $ that also participates in other
-connections), the transition may involve both merging and splitting, which we
-refer to as a \textbf{mergesplit}.
+When both nodes involved in a transition have exactly one edge but are each
+involved in other connections, the transition is labeled as a
+\textbf{mergesplit}, representing a complex reconfiguration that combines
+merging and splitting behaviors.
 
 \input{figures/mergesplit_example}
 
-Up to this point, the discussed transitions have focused on comparisons between
-clusters from two consecutive timestamps, capturing short-term structural
-changes. However, to achieve more comprehensive tracking across longer time
-horizons, it is beneficial to introduce three additional types of transitions
-that account for recurring cluster behaviors: \textbf{reappearance},
-\textbf{resplit}, and \textbf{remerge}.
+While the transitions discussed so far describe short-term structural changes
+between consecutive timestamps, long-term dynamics often involve recurring
+patterns. To support extended temporal analysis, three additional transition
+types are introduced: \textbf{reappearance}, \textbf{remerge}, and
+\textbf{resplit}.
 
-\textbf{Reappearance} describes the event where a previously disappeared cluster
-re-emerges at a later timestamp. To support the detection of this transition,
-statistical information about disappeared clusters is stored. When a new cluster
-appears in a future iteration, it is compared against the set of previously
-disappeared clusters. If a significant overlap is found, the transition is
-categorized as a reappearance rather than a new appearance.
+\begin{itemize}
+      \item \textbf{Reappearance} occurs when a cluster that previously disappeared re-emerges after a delay. To detect this, information about disappeared clusters is retained. If a new cluster in a future timestep significantly overlaps with one of these stored clusters, it is classified as a reappearance rather than a new appearance.
 
-\textbf{Remerge} refers to a scenario in which a cluster, originally formed by
-the merging of multiple clusters, undergoes a subsequent split. In such cases,
-information about the original merged components is preserved. If, at a later point,
-the resulting clusters show sufficient overlap with the initially merged clusters,
-the transition is identified as a remerge.
+      \item \textbf{Remerge} describes a situation in which a previously merged cluster splits and, at a later point, its components reassemble into a similar structure. The system tracks the identities of the original components, allowing for recognition of this reformation.
 
-\textbf{Resplit} represents the inverse case, where clusters that were previously
-the result of a split later merge again. The identities of the components resulting
-from the original split are stored, and if these components recombine into a cluster
-that significantly overlaps with the original one, the transition is recorded as a
-resplit.
+      \item \textbf{Resplit} is the converse case, where clusters that previously resulted from a split later recombine. If the new merged cluster shows significant overlap with the original parent cluster, the event is identified as a resplit.
+\end{itemize}
 
-By incorporating these extended transition types, the tracking framework gains
-the ability to identify not only immediate transformations but also long-term
-structural recurrences, enabling a more nuanced understanding of cluster
-evolution.
+By incorporating these extended transition types, the framework enables not
+only the detection of immediate structural changes but also the identification
+of long-term recurrences. This allows for a more nuanced and temporally aware
+analysis of cluster evolution in dynamic environments.
+
+\section{Overlapping Scores Definition}\label{sec:overlapping_scores}
+Overlapping scores are used to quantify the degree of similarity or interaction
+between two clusters. In dynamic clustering, such scores play a crucial role in
+understanding cluster evolution. This section introduces two novel
+formulations: one tailored for spherical clusters, and one for Gaussian
+clusters with arbitrary covariance structures.
+
+\subsubsection*{Custom Overlapping Score for Spherical Clusters}
+
+For clusters with approximately spherical shapes, the following \textbf{Custom
+      Overlapping Score (CustomOS)} is proposed:
+
+\begin{equation}
+      \text{CustomOS}(c_1, c_2) = 2^{- \frac{d(\mu_1, \mu_2)}{r_1 + r_2}}
+\end{equation}
+
+where:
+\begin{itemize}
+      \item $ d(\mu_1, \mu_2) $ is the Euclidean distance between the centers of clusters $ c_1 $ and $ c_2 $,
+      \item $ r_1 $ and $ r_2 $ represent the respective radii (or characteristic sizes) of the clusters.
+\end{itemize}
+
+\textbf{Properties and Interpretation:}
+\begin{itemize}
+      \item The score is bounded in $ (0, 1] $, where:
+            \begin{itemize}
+                  \item $ \text{CustomOS} \to 0 $: the clusters are very distant.
+                  \item $ \text{CustomOS} = 0.5 $: the clusters are tangent, i.e., $ d(\mu_1, \mu_2) = r_1 + r_2 $.
+                  \item $ \text{CustomOS} = 1 $: the clusters are completely overlapped, i.e., $ d(\mu_1, \mu_2) = 0 $.
+            \end{itemize}
+
+      \item The score decays exponentially with the normalized inter-cluster distance,
+            providing a \textit{scale-invariant} measure of similarity.
+
+      \item The score can be interpreted as a \textbf{probability-like value} quantifying
+            the likelihood that two clusters are evolutionarily related. The most uncertain
+            case is when the clusters are tangent ($ \text{CustomOS} = 0.5 $), where:
+            \begin{itemize}
+                  \item $ c_2 $ could be the evolution of $ c_1 $ with a large center shift (i.e., $ d = r_1 + r_2 $),
+                  \item or $ c_2 $ could represent a newly formed cluster that emerged near $ c_1 $.
+            \end{itemize}
+
+      \item Thanks to these properties, a natural threshold for deciding overlap is $
+                  \epsilon = 0.5 $. Scores above this suggest potential continuity or evolution;
+            scores below indicate separation.
+
+      \item The score requires only the cluster centers and radii to compute, which makes
+            it particularly suitable for \textbf{streaming clustering frameworks} where
+            retaining all data points is infeasible. This supports lightweight and
+            efficient computation.
+
+      \item Particularly effective in micro-clustering approaches like CluStream, where
+            clusters are maintained using summary statistics.
+\end{itemize}
+
+\subsubsection*{Effective Overlapping Score for Gaussian Clusters}
+
+Building upon the idea of the \textit{Custom Overlapping Score}, which assumes
+spherical symmetry, the \textbf{Effective Overlapping Score (EffectiveOS)}
+generalizes the concept to clusters modeled as multivariate Gaussian
+distributions. This allows for the consideration of anisotropy and correlated
+features by incorporating covariance structure into the overlap estimation.
+
+The \textbf{EffectiveOS} is defined as:
+
+\begin{equation}
+      \text{EffectiveOS} = 2^{\frac{-d_M(\mu_1, \mu_2)}{\text{RMSSize}_1 + \text{RMSSize}_2}}
+\end{equation}
+
+where $ d_M(\mu_1, \mu_2) $ is the Mahalanobis distance between the cluster
+means:
+
+\begin{align}
+      d_M(\mu_1, \mu_2) & = \sqrt{(\mu_1 - \mu_2)^\top \Sigma_{12}^{-1} (\mu_1 - \mu_2)} \\
+      \Sigma_{12}       & = \frac{\Sigma_1 + \Sigma_2}{2}
+\end{align}
+
+The term $ \text{RMSSize}_j $ represents the \textbf{root mean square size} of
+cluster $ j $, capturing its generalized radius along principal directions:
+
+\begin{align}
+      \text{RMSSize}_j & = \sqrt{\frac{1}{n} \sum_{i=1}^n a_i^2} \\
+      a_i              & = \chi^2_\alpha \sqrt{\lambda_i^j}
+\end{align}
+
+where:
+\begin{itemize}
+      \item $ \lambda_i^j $ are the eigenvalues of the covariance matrix $ \Sigma_j $,
+            corresponding to the variance along each principal axis of cluster $ j $,
+      \item $ \chi^2_\alpha $ is the critical value of the chi-squared distribution at
+            confidence level $ \alpha $, scaling the eigenvalues to a desired confidence boundary.
+\end{itemize}
+
+\textbf{Properties and Intuition:}
+\begin{itemize}
+      \item \textbf{Generalization of Spherical Case:} When covariance matrices are multiples
+            of the identity, the Mahalanobis distance reduces to the Euclidean distance, and
+            RMSSize approximates the radius, thus reducing to the CustomOS formulation.
+      \item \textbf{Covariance-aware Distance:} The Mahalanobis distance accounts for
+            feature correlation and direction-dependent spread, making it suitable for ellipsoidal clusters.
+      \item \textbf{Confidence-aware Scaling:} RMSSize uses the eigenvalue spectrum scaled
+            by a chi-squared factor to describe the effective spatial extent of a Gaussian cluster
+            with statistical rigor.
+      \item \textbf{Probabilistic Interpretation:} Like CustomOS, the EffectiveOS is bounded
+            in $ (0, 1] $ and can be interpreted as a probability-like measure of overlap or evolution
+            likelihood.
+      \item \textbf{Streaming-Friendly Implementation:} Although more complex than the CustomOS,
+            the EffectiveOS still relies only on statistical summaries (means, covariances, and eigenvalues),
+            making it applicable in streaming scenarios where raw data is discarded after summarization.
+\end{itemize}
+
+\section{Proposed Framework}\label{sec:proposed_framework}
+
+The architecture of the proposed dynamic clustering framework is illustrated in
+Figure~\ref{fig:architecture}. It consists of multiple interconnected modules,
+each designed to handle a specific aspect of processing and tracking clusters
+in a data stream.
+
+\begin{itemize}
+
+      \item \textbf{Online Phase (Microclustering):} The online module handles real-time
+            summarization of the stream into microclusters. A microcluster is a compact
+            structure that captures summary statistics (e.g., count, linear sum, and squared sum)
+            of nearby data points in the feature space. This process compresses the incoming data
+            into a manageable set of meaningful summaries while preserving essential distributional
+            characteristics. It ensures that data is processed with low latency and prepares it
+            for more complex downstream analysis.
+
+      \item \textbf{Triggering Strategy:} Since performing macroclustering at every step
+            would be inefficient, this module decides when to invoke the offline phase.
+            It monitors the evolution of microclusters and can be based on fixed time intervals,
+            statistical change detection. The triggering strategy ensures a balance between
+            computational efficiency and responsiveness to changes in
+            the data.
+
+      \item \textbf{Offline Phase (Macroclustering):} When triggered, this module clusters the
+            current set of microclusters to produce macroclusters—higher-level structures that
+            summarize broader data trends. Algorithms such as K-Means or Gaussian Mixture
+            Models may be applied to the weighted centers of microclusters. This step extracts
+            interpretable patterns from the stream and forms the basis for cluster tracking.
+
+      \item \textbf{History:} This module is specifically responsible for maintaining minimal
+            yet sufficient information about past macroclusters in order to detect complex long-term
+            transitions, namely \emph{reappearance}, \emph{remerge}, and \emph{resplit}.
+            Instead of storing the full stream or detailed cluster content, it archives only
+            essential descriptors (such as centroids, radii, and timestamps) of disappeared or
+            transformed clusters. This historical memory allows the tracking module to compare
+            newly formed clusters with previous ones and identify structural recurrences, enabling
+            a deeper understanding of temporal cluster dynamics while ensuring low memory overhead.
+
+            \textbf{Tracking:} The tracking module compares macroclusters across time to detect
+            how clusters evolve. By computing overlap scores (e.g., CustomOS for spherical clusters
+            or EffectiveOS for Gaussian ones) it identifies transitions.
+
+\end{itemize}
 
 \input{figures/architecture.tex}
+The framework is organized into two logical layers.
+The first is \textit{Streaming Clustering}, which includes the online phase,
+offline phase, and triggering strategy—responsible for efficiently producing
+clusters from the stream. This component follows a micro-macro clustering approach,
+where microclusters are incrementally maintained online, and macroclusters are
+periodically computed offline for higher-level summarization. While the current
+implementation adopts this structure (e.g., as in CluStream), the framework is
+flexible and can incorporate alternative streaming clustering techniques, provided
+they output interpretable cluster representations. The second group is
+\textit{Dynamic Clustering}, which extends the streaming component with memory
+and tracking capabilities, enabling long-term cluster evolution analysis.
+
+The final \textbf{Report}, consolidates the output of the entire framework into
+a comprehensive summary. It includes:
+\begin{itemize}
+      \item A table showing the status and properties of each macrocluster at every
+            iteration.
+      \item A table listing all detected transitions (e.g., splits, merges, survivals,
+            reappearances).
+      \item A graph-based visualization of transitions across all time points, extending
+            the bipartite structure into a multi-step representation.
+      \item A spatial visualization of the macrocluster evolution across iterations,
+            showing changes in position and shape over time.
+      \item A curated collection of representative data samples for each cluster at each
+            timestamp.
+      \item A series of quality plots evaluating the compactness and separation of
+            macroclusters at every macroclustering step.
+      \item A timeline plot that counts the number of updates performed in the online phase
+            at the microcluster level, providing insight into streaming activity and drift.
+\end{itemize}
+
+This rich reporting structure not only aids in interpretation and debugging but
+also enables users to analyze the evolution of data structures and validate the
+clustering process both qualitatively and quantitatively.
+
+Triggering strategies: fixed time, drift-based, change-based...

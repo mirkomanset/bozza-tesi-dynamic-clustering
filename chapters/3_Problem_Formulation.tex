@@ -3,9 +3,9 @@
 \section{Streaming Clustering}\label{sec:prob_streaming_clustering}
 A \textit{data stream} is a potentially infinite sequence of multi-dimensional
 data points:
-\[
+\begin{equation}
     \chi = \{x^t\}_{t=1}^{\infty}, \quad x^t \in \mathbb{R}^n
-\]
+\end{equation}
 where $x^t$ denotes the $n$-dimensional observation received at timestamp $t$.
 Due to the unbounded nature of data streams and limited memory or computation
 constraints, traditional batch clustering methods are not applicable in this
@@ -15,9 +15,9 @@ The goal of streaming clustering is to partition the incoming data points into
 groups in a timely and resource-efficient manner. At any given time $t$, a
 clustering algorithm processes the stream incrementally and produces a
 clustering result:
-\[
+\begin{equation}
     C^t = \{c_1^t, c_2^t, \dots, c_{k^t}^t\}
-\]
+\end{equation}
 where:
 \begin{itemize}
     \item $C^t$ denotes the clustering obtained at time $t$,
@@ -62,35 +62,35 @@ over time.
 Clusters may undergo several types of transitions:
 
 \begin{itemize}
-    \item Appearance: A new cluster is formed that did not exist previously.
-    \item Disappearance: A previously existing cluster ceases to exist.
-    \item Split: A single cluster divides into multiple clusters.
-    \item Merge: Multiple clusters combine into a single cluster.
-    \item Survival: A cluster remains relatively unchanged over time.
+    \item \textbf{Appearance}: A new cluster is formed that did not exist previously.
+    \item \textbf{Disappearance}: A previously existing cluster ceases to exist.
+    \item \textbf{Split}: A single cluster divides into multiple clusters.
+    \item \textbf{Merge}: Multiple clusters combine into a single cluster.
+    \item \textbf{Survival}: A cluster remains relatively unchanged over time.
 \end{itemize}
 
 To formally define cluster transitions, it is necessary to introduce the notion
-of \emph{overlap} between clusters at different timestamps. Given a cluster $
+of \textbf{overlap} between clusters at different timestamps. Given a cluster $
     c_i^t \in C^t $ and a cluster $ c_j^\tau \in C^\tau $, with $ t < \tau $, these
 clusters are said to \emph{overlap}, denoted as
-\[
+\begin{equation}
     c_i^t \circledast c_j^\tau,
-\]
+\end{equation}
 if they exhibit a non-negligible intersection, as determined by the underlying
-cluster representation. The precise definition of overlap depends on the chosen
+cluster representation. The specific definition of overlap depends on the chosen
 cluster model. Common examples include:
 
 \begin{itemize}
     \item \textbf{Enumeration-based Representation:}
-          \[
+          \begin{equation}
               c_i^t \circledast c_j^\tau \iff \exists x \in \mathbb{R}^n \text{ such that } x \in c_i^t \land x \in c_j^\tau,
-          \]
+          \end{equation}
           indicating that the two clusters share at least one common data point.
 
     \item \textbf{Spherical Model Representation:}
-          \[
+          \begin{equation}
               c_i^t \circledast c_j^\tau \iff d(\vec{\mu}_i^t, \vec{\mu}_j^\tau) \leq r_i^t + r_j^\tau,
-          \]
+          \end{equation}
           where $ \vec{\mu}_i^t $ and $ \vec{\mu}_j^\tau $ denote the centroids of
           clusters $ c_i^t $ and $ c_j^\tau $, respectively, $ r_i^t $ and $ r_j^\tau $
           are their radii, and $ d(\cdot, \cdot) $ is the Euclidean distance.

@@ -2,65 +2,69 @@
 
 \section{Context}\label{sec:context}
 Machine Learning (ML) has become a foundational technology to solve hard issues
-and construct usable information from large and continually growing bodies of data
-over the last few years. Financial, health, manufacturing, and fraud-detection industries
-have introduced ML models into core decision-making systems, driven by advances in
-computing power, storage, and availability of data-generating devices. These environments
-are increasingly dependent on the real-time data streams that flow in from sensors,
-transactional systems, user behavior, and external market feeds.
+and construct usable information from large and continually growing bodies of
+data over the last few years. Financial, health, manufacturing, and
+fraud-detection industries have introduced ML models into core decision-making
+systems, driven by advances in computing power, storage, and availability of
+data-generating devices. These environments are increasingly dependent on the
+real-time data streams that flow in from sensors, transactional systems, user
+behavior, and external market feeds.
 
 In such dynamic settings, the ability to process and analyze data in real time
-is not only valuable: it is essential. Stream-based learning allows
-organizations to adapt quickly to changing conditions, allowing for timely and
-strategic intervention. But operationalization and long-term operation of ML
-models in production environments are key challenges. Of them, one of the most
-enduring and far-reaching is data nonstationarity, the way in which statistical
-properties of data distributions change over time.
+is essential. Stream-based learning allows models to adapt quickly to changing
+conditions, allowing for timely and strategic intervention. Deploying and
+maintaining machine learning models over time in production environments poses
+substantial challenges. Of them, one of the most enduring and far-reaching is
+data nonstationarity, the way in which statistical properties of data
+distributions change over time.
 
-Generalized ML algorithms in general assume implicitly that the data are
-independent and identically distributed (i.i.d.) and drawn from a stationary
-distribution. This is however not the situation in real applications. The
-much-discussed concept drift, whereby data distributions change or evolve over
-time, leads to the degradation of the model's accuracy over time if not
-addressed. The drift may be due to a number of causes: gradual user behavior
-changes, regulatory or economic climate changes, degradation of sensors,
-software updates, or global catastrophes such as pandemics.
+Most generalized machine learning algorithms operate under the implicit
+assumption that data are independent and identically distributed (i.i.d.) and
+drawn from a stationary distribution. However, this assumption rarely holds in
+real-world applications. In practice, data distributions often shift or evolve
+over time—a phenomenon known as concept drift. If left unaddressed, concept
+drift can significantly degrade a model's performance. Such drift can arise
+from various factors, including gradual changes in user behavior, shifts in
+regulatory or economic conditions, sensor degradation, software updates, or
+large-scale events like global pandemics.
 
-To tackle these challenges, the Machine Learning Operations (MLOps) paradigm
-has come forward with a voice, promoting automation, monitoring, and management
-of ML systems end-to-end throughout their lifecycle. One of the key issues for
-MLOps is to make deployed models robust and reliable against concept drift.
+To address these challenges, the Machine Learning Operations (MLOps) paradigm
+has emerged as a comprehensive approach that emphasizes automation, monitoring,
+and end-to-end management of machine learning systems throughout their
+lifecycle. A central concern within MLOps is ensuring that deployed models
+remain robust and reliable in the face of concept drift.
 
 \section{Motivations}\label{sec:motivations}
 Though various detection methods have been proposed for concept drift, most
-existing solutions are likely to function as black-box systems, providing little
-or no information regarding the cause or nature of the detected drift. This lack
-of explainability is a significant problem in real-world applications, where
-understanding why and how drift occurs is crucial for taking smart decisions
-and keeping models up-to-date.
+existing solutions are likely to function as black-box systems, providing
+little or no information regarding the cause or nature of the detected drift.
+This lack of explainability poses a significant challenge in real-world
+applications, where understanding the causes and nature of drift is essential
+for making informed decisions and maintaining up-to-date models.
 
 In most instances, determining when a drift has occurred is only the start. It
 is equally important to know what type of drift has occurred and how it has
 impacted the behavior of the model. Having knowledge that an event of drift has
 occurred is not sufficient information upon which to make model adjustments.
 
-It is required to comprehend the underlying causes of drift, i.e., changes in
-data distribution, novel patterns, or alterations in external factors, in order
-to create successful retraining and maintenance plans.
+Understanding the underlying causes of drift—such as shifts in data
+distribution, emerging patterns, or changes in external factors—is essential
+for developing effective retraining and maintenance strategies.
 
 \section{Goals}\label{sec:goal}
-The objective of this work is to design an explainability-driven monitoring framework
-suitable for real-world streaming applications. The proposed method leverages dynamic
-clustering to track and interpret structural changes in incoming data, providing a
-human-interpretable view of input drift as it unfolds. By continuously adapting to
-evolving data distributions, the framework identifies shifts in cluster composition
-and formation, enabling a deeper understanding of when and why drift occurs.
+The objective of this work is to design an explainability-driven monitoring
+framework suitable for real-world streaming applications. The proposed method
+leverages dynamic clustering to track and interpret structural changes in
+incoming data, providing a human-interpretable view of input drift as it
+unfolds. By continuously adapting to evolving data distributions, the framework
+identifies shifts in cluster composition and formation, enabling a deeper
+understanding of when and why drift occurs.
 
 \section{Outline}\label{sec:outline}
-Chapter~\ref{ch:preliminaries} introduces the key concepts such as Clustering and
-Stream Learning. It also covers Explainability in Machine Learning and defines the
-various types of Drift. Techniques for Drift Detection, Adaptation, and Explainability
-are also discussed.
+Chapter~\ref{ch:preliminaries} introduces the key concepts such as Clustering
+Stream Learning. It also covers Explainability in Machine Learning and defines
+the various types of Drift. Techniques for Drift Detection, Adaptation, and
+Explainability are also discussed.
 
 Chapter~\ref{ch:problem_formulation} outlines the core research problems
 addressed in this thesis, namely the Streaming Clustering Problem and the
@@ -74,13 +78,11 @@ strengths and limits.
 Chapter~\ref{ch:method} introduces the proposed methodology, specifically
 developed to tackle the challenges discussed in the preceding chapters.
 
-Chapter~\ref{ch:experiments} details the experimental setup, covering both
-synthetic and real-world datasets, to evaluate the performance and
-effectiveness of the proposed method in detecting and adapting to drift.
+Chapter~\ref{ch:experiments} describes the experimental setup, which includes
+both synthetic and real-world datasets, to assess the effectiveness of the
+proposed method in uncovering the causes of drift and explaining its underlying
+dynamics.
 
-Chapter~\ref{ch:results} analyzes the experimental results, providing an
-in-depth evaluation of the proposed method in comparison to existing
-techniques, highlighting key performance metrics and insights.
-
-Chapter~\ref{ch:conclusions} summarizes the contributions and limitations of
-the thesis. It also suggests future research directions.
+Chapter~\ref{ch:conclusions} summarizes the key contributions and limitations
+of the thesis. It also outlines relevant directions for future research aimed
+at advancing the explainability and understanding of concept drift.

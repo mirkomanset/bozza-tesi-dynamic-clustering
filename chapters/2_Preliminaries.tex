@@ -3,7 +3,7 @@
 \section{Supervised Learning}\label{sec:supervised_leaning}
 Supervised Learning is a well-established paradigm in machine learning where an
 algorithm is trained to map input data (features) to the corresponding output
-variables (targets) of a labeled dataset.The aim is to learn a model that can
+variables (targets) of a labeled dataset. The aim is to learn a model that can
 predict in the best way possible the outputs of new input data. Let $\mathbf{x}
     \in \mathcal{X}$ be the input vectors (features) and $ y \in \mathcal{Y}$ be
 the associated output variables (targets). The training set consists of $N$
@@ -12,42 +12,43 @@ independent and identically distributed (i.i.d.) tuples $\{(\mathbf{x_i},
 $P(\mathbf{x},y)$.
 
 The main goal of supervised learning is to approximate the underlying
-input-output relation by inducing a function $h(\mathbf{x})$,that generalizes
+input-output relation by inducing a function $h(\mathbf{x})$, that generalizes
 and can make predictions for new unseen data.
 
 Formally given a learning model $\mathcal{L} = (\mathcal{H},\ell)$ which
 includes a hypothesis space $\mathcal{H}$ and a loss function $\ell: \mathbb{R}
     \times \mathbb{R} \rightarrow \mathbb{R}$, the \textit{expected risk} of a
 hypothesis $h \in H$ is defined as
-\[ 
+\begin{equation}
     R_P(h) = \mathbb{E}_P[\ell(h(\mathbf{x}),y)] = \int_{\mathcal{X}} \int_{\mathcal{Y}}
     \ell(h(\mathbf{x}),y)P(\mathbf{x},y)dyd\mathbf{x}
-\]
+\end{equation}
+where $\mathbb{E}_P$ denotes the expectation with respect to the joint
 The objective is to find the hypothesis $h^* \in \mathcal{H}$ that minimizes
 the expected risk:
-\[ 
+\begin{equation}
     h^* = \underset{h \in \mathcal{H}}{\arg\min} R_P(h)
-\]
+\end{equation}
 However, since the distribution $P(\mathbf{x},y)$ is typically unknown, the
 expected risk cannot be computed directly. Instead, an empirical version is
 used, based on a finite set of training samples. The \textit{empirical risk} is
 computed as:
-\[
+\begin{equation}
     \hat{R}_p(h) = {\frac{1}{N}} \sum^N_{i=1} \ell(h(\mathbf{x_i}),y_i)
-\]
+\end{equation}
 This leads to the principle of \textit{empirical risk minimization}, where the
 goal is to find the hypothesis $\hat{h}$ that minimizes the empirical risk:
-\[
+\begin{equation}
     \hat{h} = \underset{h \in \mathcal{H}}{\arg\min} \hat{R}_P(h)
-\]
+\end{equation}
 
 \section{Unsupervised Learning}\label{sec:unsupervised_learning}
-Unsupervised Learning refers to a class of machine learning methods where the
-aim is to uncover underlying structure or patterns in a dataset without being
-provided labeled outputs. In this setting, only input data $\mathbf{x} \in
-    \mathcal{X}$ is available, typically drawn from an unknown probability
-distribution $P(\mathbf{x})$, and no supervision signal (target variable) is
-provided.
+Unsupervised Learning is another well-established paradigm in machine learning
+where the aim is to uncover underlying structure or patterns in a dataset
+without being provided labeled outputs. In this setting, only input data
+$\mathbf{x} \in \mathcal{X}$ is available, typically drawn from an unknown
+probability distribution $P(\mathbf{x})$, and no supervision signal (target
+variable) is provided.
 
 The learning process aims to discover meaningful representations or groupings
 that reveal properties of the data such as clusters, latent factors, or
@@ -59,74 +60,222 @@ Unlike supervised learning, where the risk is naturally defined with respect to
 a prediction error on a known target, unsupervised learning often lacks a
 unique objective function. Instead, each task introduces its own criteria:
 \begin{itemize}
-    \item in clustering, algorithms aim to assign data points to groups such that
+    \item In clustering, algorithms aim to assign data points to groups such that
           intra-cluster similarity is maximized while inter-cluster similarity is
           minimized;
-    \item in dimensionality reduction, methods seek low-dimensional embeddings that
+    \item In dimensionality reduction, methods seek low-dimensional embeddings that
           preserve specific properties of the data, such as variance (PCA) or
           neighborhood structure (t-SNE, UMAP);
-    \item in density estimation, the goal is to estimate the data-generating distribution
+    \item In density estimation, the goal is to estimate the data-generating distribution
           $P(\mathbf{x})$ itself.
 \end{itemize}
 Formally, many unsupervised learning problems can be cast as optimization tasks of the form:
-\[
+\begin{equation}
     \hat{h} = \underset{f \in \mathcal{F}}{\arg\min} \mathcal{L}(f; \mathbf{x_1,\ldots,x_N}),
-\]
+\end{equation}
 where $\mathcal{F}$ is the space of candidate functions or models, and
 $\mathcal{L}$ is a task-specific loss function that quantifies the quality of
-the learned structure (e.g.\ reconstruction error, likelihood, clustering
+the learned structure (e.g., reconstruction error, likelihood, clustering
 objective). Unlike in supervised learning, $\mathcal{L}$ does not directly
 compare predictions to ground truth targets, but instead measures
 inter-consistency or data fit.
 
 \section{Clustering}\label{sec:clustering}
+
 Clustering is a fundamental task in unsupervised learning that aims to
-partition a dataset into groups, or \textit{clusters}, such that data points
-within the same cluster are more similar to each other than to those in
-different clusters. It serves as a tool for structure discovery, summarization,
-and drift analysis in high-dimensional data.
+partition a dataset into groups, or \textit{clusters}, such that instances
+within the same cluster are more similar to each other than to instances in
+different clusters. It is a key technique for discovering underlying structure,
+compressing data, detecting outliers, and analyzing patterns in
+high-dimensional datasets.
 
-Given a dataset $\mathcal{D} = \{\mathbf{x_1, x_2, \ldots, x_N} \} \subset
-    \mathbb{R}^d$, where each point $\mathbf{x_i}$ is drawn from an unknown
-distribution $P(\mathbf{x})$, the goal of clustering is to assign each data
-point to a cluster label $c_i \in \{1,\ldots, K\}$, where $K$ is either
-predefined or determined through model selection criteria. Clustering can be
-seen as an optimization problem over a set of candidate partitions
-$\mathcal{C}$, where each partition $\mathcal{C} = \{ C_1, C_2, \ldots, C_K\}$
-satisfies: 
-\[
+Formally, let
+\begin{equation}
+    \mathcal{D} = \{\mathbf{x}_1, \mathbf{x}_2, \ldots, \mathbf{x}_N\} \subset \mathbb{R}^d,
+\end{equation}
+where each $\mathbf{x}_i$ is a data point sampled from an unknown distribution
+$P(\mathbf{x})$. The clustering task involves assigning each point a label $c_i
+    \in \{1, \ldots, K\}$, where $K$ is either predefined, estimated automatically
+or selected via model selection techniques.
+A clustering $\mathcal{C} = \{C_1, C_2, \ldots, C_K\}$
+must satisfy the following conditions:
+\begin{equation}
     \begin{cases}
-        C_k \subseteq \mathcal{D} \\
-        C_i \cap C_j = \emptyset  \\
-        \bigcup^K_{k=1} C_k = \mathcal{D}
+        C_k \subseteq \mathcal{D}, & \forall k \in \{1, \ldots, K\} \\
+        C_i \cap C_j = \emptyset,  & \forall i \neq j               \\
+        \bigcup_{k=1}^{K} C_k = \mathcal{D}
     \end{cases}
-\]
+\end{equation}
 
-Each clustering algorithm defines an objective function $\mathcal{L}$ to be
-minimized, capturing the notion of intra-cluster similarity or inter-cluster
-separation: 
-\[ 
-    \hat{\mathcal{C}} = \underset{\mathcal{C} \in
-        \mathbf{S}}{\arg\min \mathcal{L}(\mathcal{C;D})} 
-\] 
-where $\mathbf{S}$ is the space of all admissible partitions.
+Each clustering algorithm defines an objective function $\mathcal{L}$, often
+representing intra-cluster similarity or inter-cluster separation. The optimal
+clustering is obtained by minimizing this objective over all admissible
+partitions:
+\begin{equation}
+    \hat{\mathcal{C}} = \underset{\mathcal{C} \in \mathbf{S}}{\arg\min} \, \mathcal{L}(\mathcal{C}; \mathcal{D}),
+\end{equation}
+where $\mathbf{S}$ denotes the space of valid partitions of $\mathcal{D}$.
 
-Several clustering paradigms exist, including partition-based, hierarchical,
-density-based, and model-based approaches.
+\subsection*{Clustering Algorithms}
+Clustering methods are generally categorized based on their underlying
+assumptions and mechanisms, as discussed by Ezugwu et
+al.~\cite{clustering_survey}:
+
+\textbf{Partition-based Clustering:}
+These algorithms divide the dataset into a set number of non-overlapping
+subsets (clusters) by optimizing a specific criterion.
+\begin{itemize}
+    \item \emph{K-means}~\cite{k_means}: Partitions data into $k$ clusters by minimizing
+          the sum of squared distances between data points and their assigned
+          cluster centroid.
+    \item \emph{K-medoids (PAM)}~\cite{k_medoids}: Similar to K-means but selects actual
+          data points (medoids) as cluster centers, making it more robust to
+          outliers.
+\end{itemize}
+
+\textbf{Hierarchical Clustering:}
+These methods create a hierarchy of clusters either by progressively
+merging (agglomerative) or splitting (divisive) clusters.
+\begin{itemize}
+    \item \emph{BIRCH}~\cite{birch}: Efficient for large datasets; incrementally
+          constructs a clustering feature (CF) tree and applies clustering
+          to its leaves.
+    \item \emph{CURE}~\cite{cure}:  Selects well-scattered points in each cluster
+          and shrinks them towards the centroid to better handle arbitrary
+          shapes and outliers.
+\end{itemize}
+
+\textbf{Density-based Clustering:}
+Clusters are formed based on areas of high density separated by areas
+of low density, allowing detection of arbitrarily shaped clusters.
+\begin{itemize}
+    \item \emph{DBSCAN}~\cite{dbscan}: Groups points that are closely packed and labels
+          as outliers those lying in low-density regions.
+    \item \emph{OPTICS}~\cite{optics}: Extends DBSCAN by capturing the clustering structure
+          at multiple density levels without a fixed threshold.
+\end{itemize}
+
+\textbf{Fuzzy Clustering:}
+Unlike hard clustering, these algorithms assign each data point a membership
+value for each cluster, allowing soft assignments.
+\begin{itemize}
+    \item \emph{Fuzzy C-Means (FCM)}~\cite{fuzzy_c_means}: Minimizes an objective function by
+          allowing data points to belong to multiple clusters with varying degrees.
+\end{itemize}
+
+\textbf{Distribution-based Clustering:}
+These methods assume the data is generated from a mixture of probabilistic
+distributions and infer the parameters of those distributions.
+\begin{itemize}
+    \item \emph{Gaussian Mixture Models (GMM)}~\cite{gaussian_mixtures}: Uses the Expectation-Maximization (EM)
+          algorithm to model data as a mixture of Gaussians, providing soft cluster memberships.
+\end{itemize}
+
+\textbf{Grid-based Clustering:}
+These algorithms divide the data space into a finite number of grid cells
+and perform clustering on the grid structure.
+\begin{itemize}
+    \item \emph{CLIQUE}~\cite{clique}: Combines grid-based and density-based methods
+          to efficiently identify clusters in high-dimensional data.
+\end{itemize}
+
+\textbf{Model-based Clustering:}
+These approaches assume a model for each cluster and optimize the fit of the model to the data.
+\begin{itemize}
+    \item \emph{Self-Organizing Maps (SOM)}~\cite{som}: A type of neural network that
+          maps high-dimensional input data into a lower-dimensional (typically 2D)
+          representation while preserving topological relationships.
+\end{itemize}
+
+\subsection*{Clustering Evaluation Metrics}
+
+Clustering evaluation metrics are broadly classified into \textbf{internal} and
+\textbf{external} criteria. Internal metrics assess the quality of a clustering
+using only the input data and the clustering result, without reference to any
+external information. External metrics, on the other hand, require ground truth
+labels to compare the clustering against known class memberships.
+
+\textbf{Silhouette Coefficient:} This metric measures how similar a data point is to
+its own cluster compared to other clusters. For a data point $i$, the silhouette score
+is defined as:
+\begin{equation}
+    s(i) = \frac{b(i) - a(i)}{\max\{a(i), b(i)\}},
+\end{equation}
+where $a(i)$ is the average distance from $i$ to all other points in its
+cluster, and $b(i)$ is the smallest average distance from $i$ to points in a
+different cluster. The coefficient ranges from $-1$ to $1$, where values close
+to $1$ indicate well-clustered points.
+
+\textbf{Davies-Bouldin Index (DBI):} This metric evaluates the average similarity between each
+cluster and its most similar cluster, defined as the sum of the within-cluster distances divided
+by the between-cluster centroid distances. Formally:
+\begin{equation}
+    \text{DBI} = \frac{1}{K} \sum_{i=1}^{K} \max_{j \ne i} \left( \frac{\sigma_i + \sigma_j}{d_{ij}} \right),
+\end{equation}
+where $\sigma_i$ is the average distance of points in cluster $i$ to its
+centroid, and $d_{ij}$ is the distance between the centroids of clusters $i$
+and $j$. Lower values of DBI indicate better clustering.
+
+\textbf{Calinski-Harabasz Index (CHI):} Also known as the variance ratio criterion,
+this index evaluates the ratio of between-cluster dispersion to within-cluster dispersion:
+\begin{equation}
+    \text{CHI} = \frac{\text{Tr}(B_K)}{\text{Tr}(W_K)} \cdot \frac{N - K}{K - 1},
+\end{equation}
+where $\text{Tr}(B_K)$ and $\text{Tr}(W_K)$ represent the traces of the
+between- and within-cluster dispersion matrices, respectively. Higher CHI
+scores correspond to better defined and more compact clusters.
+
+\textbf{Adjusted Rand Index (ARI):} The ARI compares the similarity between the predicted clusters
+and the ground truth labels, correcting for chance groupings:
+\begin{equation}
+    \text{ARI} = \frac{\text{RI} - \mathbb{E}[\text{RI}]}{\max(\text{RI}) - \mathbb{E}[\text{RI}]},
+\end{equation}
+where $\text{RI}$ is the Rand Index and $\mathbb{E}[\text{RI}]$ is its expected
+value under random assignments. ARI values range from $-1$ to $1$, with $1$
+indicating perfect agreement.
+
+\textbf{Normalized Mutual Information (NMI):} NMI measures the amount of shared information
+between the clustering assignments and the ground truth labels:
+\begin{equation}
+    \text{NMI}(U, V) = \frac{2 \cdot I(U; V)}{H(U) + H(V)},
+\end{equation}
+where $I(U; V)$ is the mutual information and $H(\cdot)$ denotes entropy. NMI
+ranges from $0$ (no mutual information) to $1$ (perfect correlation), and is
+particularly useful when the number of clusters differs from the number of
+classes.
+
+\textbf{Fowlkes-Mallows Index (FMI):} This index is the geometric mean of pairwise precision and recall:
+\begin{equation}
+    \text{FMI} = \sqrt{\frac{TP}{TP + FP} \cdot \frac{TP}{TP + FN}},
+\end{equation}
+where $TP$, $FP$, and $FN$ represent the counts of true positive, false
+positive, and false negative pairs, respectively. Higher values of FMI indicate
+a better match between predicted and true cluster labels.
+
+Each metric provides a different perspective on clustering quality. Internal
+metrics are essential when no labels are available, while external metrics
+offer direct validation against known structure in labeled datasets.
 
 \section{Stream Learning}\label{sec:stream_learning}
-In many real-world applications, data is not available as a static, finite dataset but rather arrives continuously over time in the form of a stream. Stream Learning, also known as Online Learning or Incremental Learning, is a machine learning paradigm designed to handle such continuously evolving data environments. Unlike traditional batch learning methods, stream learning algorithms are capable of processing data points individually or in small batches, often in a single pass, and updating their models incrementally.
+In many real-world applications, data is not available as a static, finite
+dataset but rather arrives continuously over time in the form of a stream.
+Stream Learning, also known as Online Learning or Incremental Learning, is a
+machine learning paradigm designed to handle such continuously evolving data
+environments. Unlike traditional batch learning methods, stream learning
+algorithms are capable of processing data points individually or in small
+batches, often in a single pass, and updating their models incrementally.
 
-Formally, let $\{\mathbf{x_1, x_2,\ldots} \} $ be a potentially infinite sequence
-of data points drawn from a stream. The stream learning algorithm maintains a
-model $\mathcal{M}_t$ at each time step $t$ which is updated upon receiving a
-new data point $\mathbf{x}_t$. The update is performed using a function $U$
-such that: 
-\[ 
-    \mathcal{M}_{t+1} = U(\mathcal{M}_t, \mathbf{x_t}) 
-\] 
-This formulation allows the model to evolve over time while using bounded
-memory and computation, a critical requirement in streaming scenarios.
+Formally, let $\{\mathbf{x_1, x_2,\ldots} \} $ be a potentially infinite
+sequence of data points drawn from a stream. The stream learning algorithm
+maintains a model $\mathcal{M}_t$ at each time step $t$ which is updated upon
+receiving a new data point $\mathbf{x}_t$. The update is performed using a
+function $U$ such that:
+\begin{equation}
+    \mathcal{M}_{t+1} = U(\mathcal{M}_t, \mathbf{x_t})
+\end{equation}
+This formulation enables the model to adapt continuously over time while 
+operating within bounded memory and computational constraints, as required 
+in streaming scenarios where incoming data can be potentially infinite.
 
 Key characteristics of stream learning include:
 \begin{itemize}
@@ -143,12 +292,13 @@ while adapting to new information and detecting changes in the underlying data
 distribution.
 
 \section{Explainability in Machine Learning}\label{sec:explainability}
-Explainability in Machine Learning refers to the ability to understand and interpret 
-the decisions made by machine learning models. As Machine Learning systems are deployed 
-in critical areas such as healthcare, finance, and autonomous driving, the need for 
-transparency and interpretability becomes crucial. Understanding why a model produces 
-a particular output allows users to gain insights into the reasoning behind the model's 
-predictions, leading to more informed decision-making.
+Explainability in Machine Learning refers to the ability to understand and
+interpret the decisions made by machine learning models. As Machine Learning
+systems are deployed in critical areas such as healthcare, finance, and
+autonomous driving, the need for transparency and interpretability becomes
+crucial. Understanding why a model produces a particular output allows users to
+gain insights into the reasoning behind the model's outputs, leading to
+more informed decision-making.
 
 The importance of explainability extends to several practical areas. It aids in
 model validation and debugging, enabling developers to identify potential
@@ -180,34 +330,111 @@ target labels (prediction drift), or in the underlying relationships between
 the data and the target (concept drift). Detecting and adapting to data drift
 is an essential part of maintaining long-term model performance.
 
-\subsection{Drift Definitions}\label{subsec:drift_definitions}
+\subsection*{Drift Definitions}\label{subsec:drift_definitions}
 Drift can manifest in several forms, each affecting the model in different
 ways:
 
-Input Drift: it refers to changes in the distribution of input features. For
-example, new types of customer behavior or market conditions may introduce
-patterns that the model has not seen before.
+\textbf{Input Drift} (also known as covariate shift): This refers to changes in the distribution
+of input features over time. Formally, this occurs when:
+\begin{equation}
+    P_t(X) \neq P_{t+\Delta}(X)
+\end{equation}
+where $ P_t(X) $ is the distribution of input data at time $ t $, and $
+    P_{t+\Delta}(X) $ is the distribution at a later time. For example, new types
+of customer behavior or market conditions may introduce patterns that the model
+has not seen before.
 
-Prediction Drift: it occurs when the relationship between the input data and
-the predicted labels changes over time. This might happen if the underlying
-problem or task evolves, requiring the model to adapt its predictions.
+\textbf{Prediction Drift}: This type of drift occurs when the distribution of the predicted
+labels changes over time:
+\begin{equation}
+    P_t(\hat{Y}) \neq P_{t+\Delta}(\hat{Y})
+\end{equation}
+It typically signals that the model is producing different outputs over time
+for similar inputs, possibly due to changes in the input distribution or model
+behavior.
 
-Concept Drift: it refers to changes in the fundamental relationship between the
-input data and the target variable. This type of drift is particularly
-challenging as it can render a model's assumptions invalid, making it necessary
-to retrain the model.
+\textbf{Concept Drift}: This refers to changes in the conditional distribution of the target
+variable given the input:
+\begin{equation}
+    P_t(Y \mid X) \neq P_{t+\Delta}(Y \mid X)
+\end{equation}
+This is the most critical type of drift, as it directly affects the validity of
+the model's assumptions. Concept drift can render the model obsolete if not
+addressed, often requiring retraining or adaptation mechanisms.
 
-\subsection{Drift Detection}\label{subsec:drift_detection}
+\subsection*{Drift Detection}\label{subsec:drift_detection}
 Drift detection aims to identify when a change in the data distribution has
 occurred. Several techniques have been developed for detecting drift, including
-statistical tests (e.g., Kolmogorov-Smirnov test), performance monitoring
-(e.g., monitoring prediction accuracy), and data comparison methods (e.g.,
-comparing distributions of recent and past data). The challenge in drift
-detection lies in distinguishing between true drifts and natural fluctuations
-in data, as well as determining when a drift is significant enough to warrant
+statistical tests, performance monitoring, and window-based methods. The main
+challenge lies in distinguishing true drifts from natural fluctuations in the
+data and determining whether a detected drift is significant enough to warrant
 model retraining.
 
-\subsection{Drift Adaption}\label{subsec:drift_adaption}
+\textbf{1. Statistical Change Detection}:
+
+These methods detect changes in data or performance over time by tracking
+cumulative deviations from a reference value.
+
+\begin{itemize}
+    \item \textit{Page-Hinkley Test (PHT)}: This test is particularly suited for
+          detecting gradual changes. It monitors the cumulative difference between a variable
+          (e.g., error, loss) and its running mean. Let $ x_t $ be the observed value at time
+          $ t $, and $ \bar{x} $ be the mean up to time $ t $. The cumulative difference
+          is tracked by:
+          \begin{equation}
+              m_t = \sum_{i=1}^{t} (x_i - \bar{x} - \delta)
+          \end{equation}
+          where $ \delta $ is a tolerance parameter (to ignore small fluctuations). The
+          minimum value of $ m_t $ is tracked:
+          \begin{equation}
+              M_t = \min_{1 \leq i \leq t} m_i
+          \end{equation}
+          A drift is signaled if:
+          \begin{equation}
+              m_t - M_t > \lambda
+          \end{equation}
+          where $ \lambda $ is a threshold parameter. This method is sensitive to
+          sustained changes in the monitored variable.
+\end{itemize}
+
+\textbf{2. Performance Monitoring}:
+
+This method monitors changes in the model's performance metrics over time, such
+as accuracy, precision, recall, or loss. A significant drop in performance can
+indicate the presence of drift.
+
+\begin{equation}
+    \Delta \text{Acc} = \text{Acc}_{t_0} - \text{Acc}_{t+\Delta}
+\end{equation}
+
+Where $ \text{Acc}_{t_0} $ is the baseline accuracy and $ \text{Acc}_{t+\Delta}
+$ is the current accuracy. If $ \Delta \text{Acc} $ exceeds a predefined
+threshold, drift is suspected.
+
+\textbf{3. Window-Based Techniques}:
+
+These approaches compare statistical properties of a sliding window of recent
+data to a reference window (often older data or model expectations). A
+well-known algorithm is:
+
+\begin{itemize}
+    \item \textit{Drift Detection Method (DDM)}: Based on monitoring the error rate of
+          predictions over time. Let $ p_t $ be the error rate and $ s_t = \sqrt{p_t(1 - p_t)/t} $
+          its standard deviation at time $ t $. DDM raises a warning or drift alarm if:
+          \begin{equation}
+              p_t + s_t \geq p_{\min} + 2s_{\min} \quad \text{(warning)}
+          \end{equation}
+          \begin{equation}
+              p_t + s_t \geq p_{\min} + 3s_{\min} \quad \text{(drift)}
+          \end{equation}
+          where $ p_{\min} $ and $ s_{\min} $ are the lowest recorded error rate and
+          its standard deviation.
+\end{itemize}
+
+These methods are often combined or tuned depending on the nature of the data
+and the operational constraints of the system.
+
+\subsection*{Drift Adaption}\label{subsec:drift_adaption}
 Once drift has been detected, adaptation methods are employed to update the
 model and maintain its performance. Adaptation strategies can include
 retraining the model on recent data, adjusting model parameters, or
@@ -217,7 +444,7 @@ Additionally, strategies for forgetting outdated information and retaining
 relevant knowledge are critical for efficient drift adaptation, ensuring the
 model remains responsive to evolving data.
 
-\subsection{Drift Explainability}\label{subsec:drift_explainability}
+\subsection*{Drift Explainability}\label{subsec:drift_explainability}
 Drift explainability focuses on understanding the nature and reasons behind
 changes in data distributions that impact machine learning models. While
 detecting drift is essential, it is equally important to comprehend why and how
@@ -238,9 +465,3 @@ drift, it is difficult to assess whether model updates are necessary, and if
 so, what specific adjustments should be made. This lack of insight could lead
 to inefficient or unnecessary retraining, which may ultimately degrade model
 performance.
-
-In dynamic environments, where data continuously evolves, explaining drift also
-allows for distinguishing between transient fluctuations and more persistent
-changes. This understanding prevents premature retraining for short-term
-variations, ensuring that updates occur only when the drift is substantial
-enough to impact model accuracy.
