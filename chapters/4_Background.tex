@@ -8,8 +8,8 @@ distribution. Unlike traditional batch clustering methods, streaming clustering
 must operate under constraints such as limited memory, the impossibility of
 revisiting old data, and the need for real-time processing. As discussed by
 Zubaroglu et Atalay~\cite{streaming_clustering_review}, the main categories of
-streaming clustering algorithms are: hierarchical,
-partitioning-based, density-based, grid-based, and model-based methods.
+streaming clustering algorithms are: hierarchical, partitioning-based,
+density-based, grid-based, and model-based methods.
 
 \textbf{Hierarchical streaming clustering} algorithms produce nested clusters organized
 in a tree-like structure called a dendrogram, which offers a rich and interpretable
@@ -19,23 +19,24 @@ each data point as a separate cluster and iteratively merge clusters based on si
 whereas divisive algorithms begin with all data points in a single cluster and recursively
 split them. Although hierarchical methods provide detailed cluster structures, their high
 computational complexity and sensitivity to noise and outliers make them less suitable for
-high-velocity data streams. Examples include \textsc{BIRCH}~\cite{birch} and \textsc{HUE-Stream}.
+high-velocity data streams. Examples include \textsc{BIRCH}~\cite{birch} and
+\textsc{HUE-Stream}~\cite{hue_stream}.
 
 \textbf{Partitioning-based streaming algorithms} divide data into a predefined number of clusters
 by optimizing an objective function, commonly based on distance measures to cluster centroids. They
 maintain compact data summaries such as micro-clusters or cluster feature vectors to efficiently update
 clusters incrementally. These algorithms are computationally efficient and easy to implement; however,
 they generally require prior knowledge of the number of clusters and tend to identify only spherical
-or convex clusters. Notable examples include \textsc{CluStream}, \textsc{StreamKM++}, and incremental
-versions of \textit{k}-means.
+or convex clusters. Notable examples include \textsc{CluStream}~\cite{clustream} and
+\textsc{StreamKM++}~\cite{stream_km_plus_plus}.
 
 \textbf{Density-based methods} identify clusters as regions of high data density separated by
 regions of low density. In streaming contexts, they maintain summaries of dense micro-clusters
 that evolve over time, allowing them to discover arbitrarily shaped clusters and automatically
 detect the number of clusters. These methods also demonstrate robustness to noise and outliers.
 However, they typically require multiple user-defined parameters and can struggle when clusters
-have varying densities. Representative algorithms include \textsc{DenStream}, \textsc{D-Stream},
-and \textsc{Incremental DBSCAN}.
+have varying densities. Representative algorithms include \textsc{DenStream}~\cite{denstream}
+and \textsc{D-Stream}~\cite{d_stream}.
 
 \textbf{Grid-based streaming clustering} approaches partition the data space into a finite number
 of cells or grids and cluster these cells based on their density or other summary statistics. This
@@ -43,14 +44,15 @@ discretization allows for fast updates and scalable clustering as runtime depend
 number of cells rather than the number of data points. Grid-based methods are naturally robust to
 noise and can detect clusters of arbitrary shapes; however, their performance decreases in high-dimensional
 spaces due to the exponential growth of grid cells. Additionally, the choice of grid granularity heavily
-influences clustering results. Examples include \textsc{MR-Stream} and \textsc{G-Stream}.
+influences clustering results. Examples include \textsc{MR-Stream}~\cite{mr_stream}
+and \textsc{CLIQUE}~\cite{clique}.
 
 \textbf{Model-based streaming clustering algorithms} assume that data are generated from a mixture of
 underlying probability distributions and aim to identify these models incrementally. These approaches
 offer principled frameworks with strong noise robustness and can incorporate prior knowledge through
 model selection. However, their effectiveness depends on the appropriateness of the selected model,
 and they often involve complex parameter estimation procedures. Algorithms in this category include
-\textsc{COBWEB} and \textsc{CluDistream}.
+\textsc{COBWEB}~\cite{cobweb} and \textsc{CluDistream}~\cite{cludistream}.
 
 \begin{table}[H]
     \centering
@@ -85,20 +87,18 @@ been extensively implemented and integrated into several real-time data stream
 clustering solutions.
 
 \subsection{CluStream}\label{subsec:clustream}
-
-CluStream is a pioneering framework designed to perform clustering over
-evolving data streams. It is built on a two-phase architecture, separating the
-concerns of efficient online data processing from more computationally
-intensive offline clustering analysis.
+CluStream~\cite{clustream} is a widely adopted framework developed to address
+the problem of clustering in evolving data streams. It is built on a two-phase
+architecture, separating the concerns of efficient online data processing from
+more computationally intensive offline clustering analysis.
 
 CluStream consists of the following components:
-
 \begin{itemize}
-    \item \textbf{Online Micro-Clustering Component} – Summarizes incoming data streams into
+    \item \textbf{Online Micro-Clustering Component}: Summarizes incoming data streams into
           micro-clusters using statistical representations, enabling efficient storage and update.
-    \item \textbf{Offline Macro-Clustering Component} – Applies conventional clustering
+    \item \textbf{Offline Macro-Clustering Component}: Applies conventional clustering
           algorithms to the micro-cluster summaries for user-interpretable cluster outputs.
-    \item \textbf{Pyramidal Time Frame} – Maintains historical snapshots of micro-clusters
+    \item \textbf{Pyramidal Time Frame}: Maintains historical snapshots of micro-clusters
           at different temporal resolutions for temporal queries.
 \end{itemize}
 
@@ -179,7 +179,7 @@ emergence, disappearance, splitting, merging, and persistence of clusters over
 time. This section reviews the key methodologies corresponding to the
 transition types outlined in Section~\ref{sec:prob_tracking_clusters},
 organizing them according to the algorithmic paradigms they follow, as also
-done in~\cite{tracking_review}.
+done by Atif et al.~\cite{tracking_review}.
 
 \textbf{Self-Organizing Maps (SOMs)} change tracking and it is build on the idea of
 learning low-dimensional topological representations of high-dimensional temporal data.

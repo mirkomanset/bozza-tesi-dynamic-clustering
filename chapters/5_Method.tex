@@ -6,11 +6,11 @@ incorporates the recurrence of specific cluster evolutions over time, enabling
 a more realistic modeling of evolving data streams. A new formulation of
 overlapping scores is then proposed for both spherical and Gaussian clusters,
 allowing for a more precise quantification of cluster overlap. In addition, a
-triggering mechanism based on the CluStream micro-clustering algorithm is
-introduced to detect significant structural changes in the data. The chapter
-concludes with a detailed description of the framework's architecture,
-outlining its components and their interactions in supporting adaptive and
-interpretable streaming clustering.
+triggering mechanism based on the CluStream~\cite{clustream} micro-clustering
+algorithm is introduced to detect significant structural changes in the data.
+The chapter concludes with a detailed description of the framework's
+architecture, outlining its components and their interactions in supporting
+adaptive and interpretable streaming clustering.
 
 \section{Extended Transitions}\label{sec:extended_transitions}
 
@@ -18,10 +18,10 @@ To more accurately capture the dynamic evolution of clusters over time, this
 section introduces an extension to the traditional notion of transitions.
 Instead of relying solely on pairwise comparisons or aggregate statistics,
 transitions are modeled using a structured and interpretable representation. As
-described in MEC, one effective approach is to represent transitions between
-two clustering results as a \textbf{bipartite graph}. In this graph, each node
-represents a cluster at a specific time point, and edges indicate the degree of
-overlap between clusters across two consecutive timestamps.
+described in MEC~\cite{mec}, one effective approach is to represent transitions
+between two clustering results as a \textbf{bipartite graph}. In this graph,
+each node represents a cluster at a specific time point, and edges indicate the
+degree of overlap between clusters across two consecutive timestamps.
 
 This representation enables a principled framework for identifying and
 classifying transition patterns. Each edge encodes a correspondence between
@@ -119,7 +119,7 @@ clusters with arbitrary covariance structures.
 For clusters with approximately spherical shapes, the following \textbf{Custom
       Overlapping Score (CustomOS)} is proposed:
 
-\begin{equation}
+\begin{equation}\label{eq:custom_os}
       \text{CustomOS}(c_1, c_2) = 2^{- \frac{d(\mu_1, \mu_2)}{r_1 + r_2}}
 \end{equation}
 
@@ -157,18 +157,16 @@ where:
             it particularly suitable for \textbf{streaming clustering frameworks} where
             retaining all data points is infeasible. This supports lightweight and
             efficient computation.
-
-      \item Particularly effective in micro-clustering approaches like CluStream, where
-            clusters are maintained using summary statistics.
 \end{itemize}
 
 \subsubsection*{Effective Overlapping Score for Gaussian Clusters}
 
-Building upon the idea of the \textit{Custom Overlapping Score}, which assumes
-spherical symmetry, the \textbf{Effective Overlapping Score (EffectiveOS)}
-generalizes the concept to clusters modeled as multivariate Gaussian
-distributions. This allows for the consideration of anisotropy and correlated
-features by incorporating covariance structure into the overlap estimation.
+Building upon the idea of the \textit{Custom Overlapping
+      Score}~\ref{eq:custom_os}, which assumes spherical symmetry, the
+\textbf{Effective Overlapping Score (EffectiveOS)} generalizes the concept to
+clusters modeled as multivariate Gaussian distributions. This allows for the
+consideration of anisotropy and correlated features by incorporating covariance
+structure into the overlap estimation.
 
 The \textbf{EffectiveOS} is defined as:
 
@@ -222,8 +220,38 @@ where:
 
 The architecture of the proposed dynamic clustering framework is illustrated in
 Figure~\ref{fig:architecture}. It consists of multiple interconnected modules,
-each designed to handle a specific aspect of processing and tracking clusters
-in a data stream.
+each dedicated to a specific aspect of processing and tracking clusters within
+a data stream.
+
+The streaming clustering component employs the CluStream
+algorithm~\cite{clustream}, which supports distinct online and offline
+clustering phases and allows the offline phase to be triggered on demand. Each
+submodule—namely online, offline, and triggering—is also explicitly
+represented.
+
+The original algorithm's offline phase uses K-means with a fixed number of
+clusters $ k $. In contrast, the offline phase is implemented using Gaussian
+Mixture Models (GMMs)~\cite{gaussian_mixtures}, where the number of components
+is determined based on the Silhouette metric. This approach helps relax the
+spherical cluster assumption inherent in K-means and allows the number of
+clusters to adapt to the underlying data distribution without requiring prior
+knowledge of $ k $.
+
+It is noted that in the original CluStream algorithm, the offline phase is
+triggered based on a fixed time interval. As previously
+stated,~\cite{namitha_dynamic_clustering_2} implements a mechanism that
+triggers the offline phase using the Page-Hinkley algorithm to monitor the
+distance between incoming data points and their closest microclusters.
+
+In this work, a new triggering strategy specifically tailored to the CluStream
+online phase is proposed. This strategy initiates the offline phase when the
+number of significant changes in the online phase exceeds a predefined
+threshold. A significant change is defined as either the deletion of an old
+microcluster or the merging of existing microclusters, which occurs when a new
+microcluster must be created to accommodate an incoming data point.
+
+To better understand the workflow and responsibilities within the framework,
+the following subsections describe the core modules and their roles:
 
 \begin{itemize}
 
@@ -257,24 +285,17 @@ in a data stream.
             newly formed clusters with previous ones and identify structural recurrences, enabling
             a deeper understanding of temporal cluster dynamics while ensuring low memory overhead.
 
-            \textbf{Tracking:} The tracking module compares macroclusters across time to detect
+      \item \textbf{Tracking:} The tracking module compares macroclusters across time to detect
             how clusters evolve. By computing overlap scores (e.g., CustomOS for spherical clusters
             or EffectiveOS for Gaussian ones) it identifies transitions.
 
 \end{itemize}
 
 \input{figures/architecture.tex}
-The framework is organized into two logical layers.
-The first is \textit{Streaming Clustering}, which includes the online phase,
-offline phase, and triggering strategy—responsible for efficiently producing
-clusters from the stream. This component follows a micro-macro clustering approach,
-where microclusters are incrementally maintained online, and macroclusters are
-periodically computed offline for higher-level summarization. While the current
-implementation adopts this structure (e.g., as in CluStream), the framework is
-flexible and can incorporate alternative streaming clustering techniques, provided
-they output interpretable cluster representations. The second group is
-\textit{Dynamic Clustering}, which extends the streaming component with memory
-and tracking capabilities, enabling long-term cluster evolution analysis.
+
+Together, these modules enable a flexible, efficient, and adaptive clustering
+framework capable of capturing evolving patterns in streaming data while
+maintaining interpretability and scalability.
 
 The final \textbf{Report}, consolidates the output of the entire framework into
 a comprehensive summary. It includes:
@@ -298,5 +319,3 @@ a comprehensive summary. It includes:
 This rich reporting structure not only aids in interpretation and debugging but
 also enables users to analyze the evolution of data structures and validate the
 clustering process both qualitatively and quantitatively.
-
-Triggering strategies: fixed time, drift-based, change-based...

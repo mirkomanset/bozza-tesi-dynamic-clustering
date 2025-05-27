@@ -59,7 +59,8 @@ where each $C^t = \{c_1^t, \dots, c_{k_t}^t\}$ represents a set of clusters at
 time $t$, the goal is to identify and categorize transitions between clusters
 over time.
 
-Clusters may undergo several types of transitions:
+As discussed by Oliveira et Gama~\cite{mec}, clusters may undergo several types
+of transitions:
 
 \begin{itemize}
     \item \textbf{Appearance}: A new cluster is formed that did not exist previously.
@@ -124,6 +125,36 @@ transitions based on the concept of overlap:
     \caption{Formal definitions of cluster transitions}
     \label{table:cluster_transitions}
 \end{table}
+
+In contrast to the external transitions described above, which involve
+structural changes between distinct clusters over time, \textbf{internal
+    transitions} refer to the transformations that occur \emph{within} a single
+surviving cluster. These transitions are analyzed only when a cluster persists
+across time (i.e., it undergoes a \emph{survival} transition), and they
+characterize the evolution of the cluster's internal properties.
+
+Internal transitions typically involve comparisons of specific characteristics
+of a cluster between time steps, such as:
+
+\begin{itemize}
+    \item \textbf{Expansion or Shrinkage}: Changes in the cardinality (number of
+          elements) or spatial extent of a cluster, indicating that the cluster has
+          grown or contracted.
+    \item \textbf{Density Variation}: Alterations in the density of a cluster,
+          often defined in terms of the number of points per unit volume, which may
+          suggest dispersion or compaction of the cluster.
+    \item \textbf{Centroid Shift}: Movement of the cluster centroid over time,
+          reflecting a displacement in the central location of the cluster within the
+          feature space.
+\end{itemize}
+
+Although internal transitions provide additional insight into the temporal
+dynamics of clusters, they are not explicitly addressed in this thesis. The
+primary focus is on external transitions, which are more directly related to
+the structural evolution of the clustering model. Nevertheless, internal
+transitions can be readily inferred by examining the state of a surviving
+cluster before and after a time step, allowing for indirect analysis when
+needed.
 
 Tracking clusters in dynamic streaming environments presents several key
 challenges. One of the foremost difficulties is dealing with concept drift and

@@ -43,12 +43,11 @@ goal is to find the hypothesis $\hat{h}$ that minimizes the empirical risk:
 \end{equation}
 
 \section{Unsupervised Learning}\label{sec:unsupervised_learning}
-Unsupervised Learning is another well-established paradigm in machine learning
-where the aim is to uncover underlying structure or patterns in a dataset
-without being provided labeled outputs. In this setting, only input data
-$\mathbf{x} \in \mathcal{X}$ is available, typically drawn from an unknown
-probability distribution $P(\mathbf{x})$, and no supervision signal (target
-variable) is provided.
+Unsupervised learning refers to a branch of machine learning concerned with
+uncovering underlying structure or patterns in a dataset without being provided
+labeled outputs. In this setting, only input data $\mathbf{x} \in \mathcal{X}$
+is available, typically drawn from an unknown probability distribution
+$P(\mathbf{x})$, and no supervision signal (target variable) is provided.
 
 The learning process aims to discover meaningful representations or groupings
 that reveal properties of the data such as clusters, latent factors, or
@@ -216,15 +215,6 @@ where $\sigma_i$ is the average distance of points in cluster $i$ to its
 centroid, and $d_{ij}$ is the distance between the centroids of clusters $i$
 and $j$. Lower values of DBI indicate better clustering.
 
-\textbf{Calinski-Harabasz Index (CHI):} Also known as the variance ratio criterion,
-this index evaluates the ratio of between-cluster dispersion to within-cluster dispersion:
-\begin{equation}
-    \text{CHI} = \frac{\text{Tr}(B_K)}{\text{Tr}(W_K)} \cdot \frac{N - K}{K - 1},
-\end{equation}
-where $\text{Tr}(B_K)$ and $\text{Tr}(W_K)$ represent the traces of the
-between- and within-cluster dispersion matrices, respectively. Higher CHI
-scores correspond to better defined and more compact clusters.
-
 \textbf{Adjusted Rand Index (ARI):} The ARI compares the similarity between the predicted clusters
 and the ground truth labels, correcting for chance groupings:
 \begin{equation}
@@ -243,14 +233,6 @@ where $I(U; V)$ is the mutual information and $H(\cdot)$ denotes entropy. NMI
 ranges from $0$ (no mutual information) to $1$ (perfect correlation), and is
 particularly useful when the number of clusters differs from the number of
 classes.
-
-\textbf{Fowlkes-Mallows Index (FMI):} This index is the geometric mean of pairwise precision and recall:
-\begin{equation}
-    \text{FMI} = \sqrt{\frac{TP}{TP + FP} \cdot \frac{TP}{TP + FN}},
-\end{equation}
-where $TP$, $FP$, and $FN$ represent the counts of true positive, false
-positive, and false negative pairs, respectively. Higher values of FMI indicate
-a better match between predicted and true cluster labels.
 
 Each metric provides a different perspective on clustering quality. Internal
 metrics are essential when no labels are available, while external metrics
@@ -273,8 +255,8 @@ function $U$ such that:
 \begin{equation}
     \mathcal{M}_{t+1} = U(\mathcal{M}_t, \mathbf{x_t})
 \end{equation}
-This formulation enables the model to adapt continuously over time while 
-operating within bounded memory and computational constraints, as required 
+This formulation enables the model to adapt continuously over time while
+operating within bounded memory and computational constraints, as required
 in streaming scenarios where incoming data can be potentially infinite.
 
 Key characteristics of stream learning include:
@@ -292,31 +274,42 @@ while adapting to new information and detecting changes in the underlying data
 distribution.
 
 \section{Explainability in Machine Learning}\label{sec:explainability}
-Explainability in Machine Learning refers to the ability to understand and
-interpret the decisions made by machine learning models. As Machine Learning
-systems are deployed in critical areas such as healthcare, finance, and
-autonomous driving, the need for transparency and interpretability becomes
-crucial. Understanding why a model produces a particular output allows users to
-gain insights into the reasoning behind the model's outputs, leading to
-more informed decision-making.
 
-The importance of explainability extends to several practical areas. It aids in
-model validation and debugging, enabling developers to identify potential
-issues such as biases, errors, or inefficiencies in the model. Furthermore,
-explainability helps in improving model performance by revealing how different
-features influence predictions. In settings where models are constantly being
-updated or retrained with new data, interpretability ensures that the model
-continues to function as expected and allows for more effective adjustments
-when necessary.
+Explainability in Machine Learning refers to the capacity to understand and
+interpret the internal mechanics or predictions of a model. As ML systems are
+increasingly used in critical domains such as healthcare, finance, and
+autonomous systems, understanding how and why decisions are made is essential
+for building trust, ensuring accountability, and complying with ethical or
+legal standards.
 
-While machine learning models, particularly deep learning and ensemble methods,
-often achieve high accuracy, they tend to operate as `black boxes', making
-their decision-making process difficult to understand. As a result, various
-techniques have been proposed to improve the interpretability of these models.
-Methods such as LIME (Local Interpretable Model-agnostic Explanations) and SHAP
-(Shapley Additive Explanations) provide model-agnostic approaches to explain
-individual predictions, while efforts are also being made to develop inherently
-interpretable model architectures.
+Some models are inherently interpretable, such as decision trees, linear
+regression, and logistic regression, where the influence of each feature is
+explicitly encoded in the model's structure or coefficients. However, many
+state-of-the-art models—such as deep neural networks, support vector machines,
+and ensemble methods like Random Forests and Gradient Boosting Machines—are
+considered black boxes due to their complexity.
+
+To make these models more transparent, various post-hoc interpretability
+techniques have been developed. One common approach is \emph{feature
+    importance}, which quantifies how much each input feature contributes to the
+model's predictions. In tree-based models, feature importance is typically
+computed by aggregating the reduction in impurity (e.g., Gini or entropy)
+caused by splits involving each feature across all trees. In permutation-based
+importance, a feature's values are randomly shuffled, and the resulting
+decrease in model performance indicates its importance.
+
+Beyond global explanations, local interpretability techniques aim to explain
+individual predictions. \textbf{LIME} (Local Interpretable Model-agnostic
+Explanations) builds a local surrogate model (usually linear) around a
+prediction to approximate the complex model's decision boundary. \textbf{SHAP}
+(SHapley Additive exPlanations) uses game theory to attribute each feature's
+contribution to a particular prediction, ensuring properties like consistency
+and local accuracy.
+
+These explainability tools enable practitioners to better understand, trust,
+and debug machine learning models. They also help uncover model biases, improve
+transparency in automated decision-making, and ensure safe deployment in
+dynamic, real-world environments.
 
 \section{Data Drift}\label{sec:data_drift}
 Data drift refers to the phenomenon where the statistical properties of data
@@ -332,7 +325,8 @@ is an essential part of maintaining long-term model performance.
 
 \subsection*{Drift Definitions}\label{subsec:drift_definitions}
 Drift can manifest in several forms, each affecting the model in different
-ways:
+ways; following the definitions provided by Gama et
+al.~\cite{drift_adaptation_survey}:
 
 \textbf{Input Drift} (also known as covariate shift): This refers to changes in the distribution
 of input features over time. Formally, this occurs when:
@@ -363,105 +357,158 @@ the model's assumptions. Concept drift can render the model obsolete if not
 addressed, often requiring retraining or adaptation mechanisms.
 
 \subsection*{Drift Detection}\label{subsec:drift_detection}
-Drift detection aims to identify when a change in the data distribution has
-occurred. Several techniques have been developed for detecting drift, including
-statistical tests, performance monitoring, and window-based methods. The main
-challenge lies in distinguishing true drifts from natural fluctuations in the
-data and determining whether a detected drift is significant enough to warrant
-model retraining.
+Concept drift detection identifies changes in the statistical properties of
+data streams that affect model performance. A typical framework consists of
+four main stages~\cite{learning_under_concept_drift}:
 
-\textbf{1. Statistical Change Detection}:
+\begin{enumerate}
+    \item \textbf{Data Retrieval}: Organizes incoming data into chunks 
+    suitable for analysis.
+    \item \textbf{Data Modeling (Optional)}: Transforms or reduces the data 
+    for efficiency or interpretability.
+    \item \textbf{Test Statistic Computation}: Quantifies differences between 
+    past and current data or model performance.
+    \item \textbf{Hypothesis Testing}: Determines whether detected differences 
+    are statistically significant.
+\end{enumerate}
 
-These methods detect changes in data or performance over time by tracking
-cumulative deviations from a reference value.
+These stages are common across most detection algorithms and support flexible
+implementation across streaming scenarios.
 
-\begin{itemize}
-    \item \textit{Page-Hinkley Test (PHT)}: This test is particularly suited for
-          detecting gradual changes. It monitors the cumulative difference between a variable
-          (e.g., error, loss) and its running mean. Let $ x_t $ be the observed value at time
-          $ t $, and $ \bar{x} $ be the mean up to time $ t $. The cumulative difference
-          is tracked by:
-          \begin{equation}
-              m_t = \sum_{i=1}^{t} (x_i - \bar{x} - \delta)
-          \end{equation}
-          where $ \delta $ is a tolerance parameter (to ignore small fluctuations). The
-          minimum value of $ m_t $ is tracked:
-          \begin{equation}
-              M_t = \min_{1 \leq i \leq t} m_i
-          \end{equation}
-          A drift is signaled if:
-          \begin{equation}
-              m_t - M_t > \lambda
-          \end{equation}
-          where $ \lambda $ is a threshold parameter. This method is sensitive to
-          sustained changes in the monitored variable.
-\end{itemize}
+Drift detection algorithms can be broadly categorized into three groups based
+on the nature of their test statistics.
 
-\textbf{2. Performance Monitoring}:
-
-This method monitors changes in the model's performance metrics over time, such
-as accuracy, precision, recall, or loss. A significant drop in performance can
-indicate the presence of drift.
-
-\begin{equation}
-    \Delta \text{Acc} = \text{Acc}_{t_0} - \text{Acc}_{t+\Delta}
-\end{equation}
-
-Where $ \text{Acc}_{t_0} $ is the baseline accuracy and $ \text{Acc}_{t+\Delta}
-$ is the current accuracy. If $ \Delta \text{Acc} $ exceeds a predefined
-threshold, drift is suspected.
-
-\textbf{3. Window-Based Techniques}:
-
-These approaches compare statistical properties of a sliding window of recent
-data to a reference window (often older data or model expectations). A
-well-known algorithm is:
+\textbf{Error-Rate-Based Methods} monitor the performance of a predictive model. 
+A significant increase in error rate suggests concept drift. 
+Notable algorithms include:
 
 \begin{itemize}
-    \item \textit{Drift Detection Method (DDM)}: Based on monitoring the error rate of
-          predictions over time. Let $ p_t $ be the error rate and $ s_t = \sqrt{p_t(1 - p_t)/t} $
-          its standard deviation at time $ t $. DDM raises a warning or drift alarm if:
-          \begin{equation}
-              p_t + s_t \geq p_{\min} + 2s_{\min} \quad \text{(warning)}
-          \end{equation}
-          \begin{equation}
-              p_t + s_t \geq p_{\min} + 3s_{\min} \quad \text{(drift)}
-          \end{equation}
-          where $ p_{\min} $ and $ s_{\min} $ are the lowest recorded error rate and
-          its standard deviation.
+    \item \emph{DDM} (Drift Detection Method)~\cite{ddm}: Detects drift when the 
+    classification error increases beyond statistical thresholds.
+    \item \emph{EDDM}~\cite{eddm}: Improves DDM by considering the distance between errors, 
+    making it more sensitive to gradual drifts.
+    \item \emph{ADWIN}~\cite{adwin}: Maintains a variable-length window and compares 
+    statistics between subwindows.
 \end{itemize}
 
-These methods are often combined or tuned depending on the nature of the data
-and the operational constraints of the system.
+\textbf{Distribution-Based Methods} compare statistical properties of data distributions directly,
+often in an unsupervised setting.
 
-\subsection*{Drift Adaption}\label{subsec:drift_adaption}
-Once drift has been detected, adaptation methods are employed to update the
-model and maintain its performance. Adaptation strategies can include
-retraining the model on recent data, adjusting model parameters, or
-incorporating new data sources. In stream learning, the adaptation process must
-be performed incrementally to handle the constant flow of new data.
-Additionally, strategies for forgetting outdated information and retaining
-relevant knowledge are critical for efficient drift adaptation, ensuring the
-model remains responsive to evolving data.
+\begin{itemize}
+    \item \emph{LSDD}~\cite{lsdd}: Uses a kernel-based method to measure the difference 
+    between distributions.
+    \item \emph{ITA}~\cite{ita} (Information-Theoretic Approach): Relies on entropy and divergence 
+    measures to detect distributional changes.
+    \item \emph{SyncStream}~\cite{syncstream}: Captures synchronized structural changes in multidimensional streams.
+\end{itemize}
+
+\textbf{Ensemble and Multi-Test Methods} use multiple statistical tests or detectors in parallel or
+hierarchically to improve robustness and adaptivity.
+
+\begin{itemize}
+    \item \emph{JIT} (Just-in-Time Drift Detection)~\cite{jit}: Tests various feature combinations 
+    for localized drift detection.
+    \item \emph{HHT} (Hierarchical Hypothesis Testing)~\cite{hht}: Combines quick detection with 
+    secondary validation to reduce false alarms.
+    \item \emph{e-Detector}~\cite{e_detector}: Leverages an ensemble of heterogeneous detectors to 
+    balance early detection and accuracy.
+\end{itemize}
+
+Each category addresses different aspects of the drift detection problem.
+Error-rate-based methods are tightly coupled with the model but rely on labeled
+data. Distribution-based methods are model-agnostic and can work without
+labels, while ensemble and hierarchical approaches aim to improve detection
+reliability under varying conditions.
+
+\subsection*{Drift Adaptation}\label{subsec:drift_adaption}
+
+Concept drift adaptation refers to the broad set of techniques designed to
+maintain predictive performance in the presence of changing data distributions.
+This field is commonly referred to as \emph{Adaptive Learning}.
+
+Gama et al.~\cite{drift_adaptation_survey} classify adaptation strategies into
+two primary categories:
+
+\begin{enumerate}
+    \item \textbf{Blind methods}: These methods adapt the model continuously or
+          periodically, without relying on explicit drift detection mechanisms.
+          They are typically simpler and more responsive but may incur unnecessary
+          updates when no drift has occurred.
+    \item \textbf{Informed methods}: These approaches rely on the output of drift
+          detectors to guide the adaptation process. By updating the model only when drift
+          is detected, they aim to achieve more efficient and targeted adaptation.
+\end{enumerate}
+
+An alternative taxonomy proposed by Lu et
+al.~\cite{learning_under_concept_drift} focuses on how the model is updated:
+
+\begin{itemize}
+    \item \textbf{Simple retraining}: Upon detection of concept drift, the
+          current model is discarded and a new one is trained using the most recent
+          data. A sliding or adaptive window is often used to select relevant training
+          samples.
+    \item \textbf{Model adjusting}: Instead of retraining the entire model,
+          only affected parts are incrementally updated. This approach is particularly
+          effective for handling localized or gradual drift, and is generally more
+          efficient.
+    \item \textbf{Ensemble retraining}: Rather than relying on a single model,
+          ensemble methods maintain a pool of base classifiers. Adaptation is achieved
+          by updating, weighting, replacing, or adding classifiers in response to drift,
+          making them especially well-suited for handling recurring or complex drifts.
+\end{itemize}
+
+The effectiveness of drift adaptation methods depends on the characteristics of
+the data stream, such as the type and frequency of drift. A well-designed
+adaptive system often combines both detection and adaptation mechanisms to
+ensure timely and efficient responses to changes in data distribution.
 
 \subsection*{Drift Explainability}\label{subsec:drift_explainability}
-Drift explainability focuses on understanding the nature and reasons behind
-changes in data distributions that impact machine learning models. While
-detecting drift is essential, it is equally important to comprehend why and how
-the drift is occurring, as this provides insights into the model's evolving
-behavior and helps guide model updates and maintenance.
 
-In the context of machine learning, explaining drift involves identifying which
-features have changed significantly and how these changes influence the model's
-predictions. By using techniques such as feature importance analysis, it is
-possible to trace the shifts in data that lead to altered model outcomes. This
-helps practitioners understand the specific causes of drift, whether it stems
-from changes in feature values, relationships between features, or the overall
-data structure.
+Drift explainability focuses on understanding the causes and nature of changes
+in data distributions that affect machine learning models. While detecting
+drift is important, it is equally critical to explain why and how drift occurs.
+This understanding provides valuable insights into the model's evolving
+behavior and informs decisions about retraining and maintenance.
 
-Drift explainability becomes crucial for making informed decisions about model
-retraining and adaptation. Without understanding the underlying causes of
-drift, it is difficult to assess whether model updates are necessary, and if
-so, what specific adjustments should be made. This lack of insight could lead
-to inefficient or unnecessary retraining, which may ultimately degrade model
-performance.
+There are several techniques for explaining drift, each aiming to reveal how
+data shifts influence model behavior. One common approach involves identifying
+which features have changed significantly over time and assessing how these
+changes impact the model's predictions. For example, feature importance
+analysis can be used to compare a model $f_{\text{ref}}$ trained on reference
+data $S_P \sim P^n$ with a model $f_{\text{prod}}$ trained on production data
+$S_Q \sim Q^m$. Let $\phi_i^{\text{ref}}$ and $\phi_i^{\text{prod}}$ denote the
+importance of feature $i$ in the respective models. A large shift
+\begin{equation}
+    \Delta \phi_i = \left| \phi_i^{\text{ref}} - \phi_i^{\text{prod}} \right|
+\end{equation}
+may indicate that feature $i$ has changed its predictive relationship with the target.
+We refer to this method as \emph{feature importance for drift explainability}.
+
+Another powerful approach to drift explainability frames the detection of
+distributional shift as a binary classification problem between the reference
+dataset $S_P$ and the production dataset
+$S_Q$~\cite{revisiting_two_sample_classifier}. This method—known as a
+\emph{Classifier Two-Sample Test} (C2ST)—labels samples from $P$ with class 0
+and samples from $Q$ with class 1, and trains a binary classifier $f:
+    \mathcal{X} \rightarrow \{0, 1\}$ to distinguish between them.
+
+If the null hypothesis $H_0: P = Q$ holds, then the classification accuracy of
+$f$ on a held-out validation set $S_{\text{test}}$ should remain close to
+chance level, i.e., $\text{Acc}(f) \approx 0.5$. The test statistic is given
+by:
+\begin{equation}
+    \text{C2ST}(f) = \frac{1}{|S_{\text{test}}|} \sum_{(x, y) \in S_{\text{test}}} \mathbb{1}\{f(x) = y\}.
+\end{equation}
+A significant deviation from $0.5$ suggests that $P \neq Q$, indicating distributional drift.
+
+Beyond detection, C2STs offer an interpretable means to explain drift by
+examining the feature importances of the trained classifier. This technique,
+referred to as \emph{concept feature importance for drift explainability},
+highlights which features $x_i$ contribute most to $f(x)$, and hence to the
+difference between $P$ and $Q$.
+
+Understanding the drivers of drift is essential for effective model management.
+Without explainability, decisions about retraining may be based on guesswork,
+potentially leading to unnecessary updates or degraded performance. Drift
+explainability ensures that model updates are both necessary and well-targeted,
+guided by principled statistical and model-based insights.
