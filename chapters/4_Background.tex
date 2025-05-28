@@ -79,96 +79,82 @@ automatically adapting to concept drift, handling evolving cluster structures,
 and providing explanations for cluster evolution. These gaps motivate the
 development of dynamic clustering frameworks that combine streaming processing
 with cluster tracking and evolution analysis, enabling advanced applications
-including drift explainability and real-time anomaly detection. In the
-following subsection, we present CluStream, a widely adopted framework for
-dynamic clustering that serves as a foundational component in many existing
-systems. Due to its modular design and practical effectiveness, CluStream has
-been extensively implemented and integrated into several real-time data stream
-clustering solutions.
+including drift explainability.
+
+The following subsection introduces CluStream, a widely adopted framework for
+dynamic clustering that serves as a foundational component in numerous existing
+systems. Owing to its modular architecture and demonstrated practical
+effectiveness, CluStream has been extensively implemented and integrated into
+various real-time data stream clustering solutions.
 
 \subsection{CluStream}\label{subsec:clustream}
-CluStream~\cite{clustream} is a widely adopted framework developed to address
-the problem of clustering in evolving data streams. It is built on a two-phase
-architecture, separating the concerns of efficient online data processing from
-more computationally intensive offline clustering analysis.
 
-CluStream consists of the following components:
-\begin{itemize}
-    \item \textbf{Online Micro-Clustering Component}: Summarizes incoming data streams into
-          micro-clusters using statistical representations, enabling efficient storage and update.
-    \item \textbf{Offline Macro-Clustering Component}: Applies conventional clustering
-          algorithms to the micro-cluster summaries for user-interpretable cluster outputs.
-    \item \textbf{Pyramidal Time Frame}: Maintains historical snapshots of micro-clusters
-          at different temporal resolutions for temporal queries.
-\end{itemize}
+CluStream~\cite{clustream} is a widely adopted framework designed for
+clustering evolving data streams. It operates on a two-phase architecture that
+separates online data summarization from offline cluster analysis, balancing
+real-time efficiency with analytical depth.
 
-Each micro-cluster (MC) in CluStream is a summary of a group of closely related
-data points. A micro-cluster is formally defined using the \textit{Clustering
-    Feature (CF)} vector:
+\paragraph{Online Micro-Clustering} The online phase processes incoming data in real time, incrementally
+summarizing the stream into a set of \textit{micro-clusters}. Each
+micro-cluster is a temporal summary of a group of data points and is defined
+using a variant of the Clustering Feature (CF) vector:
 
 \begin{equation}
-    \text{MC} = \left( \vec{CF}_1, CF_2, \vec{CF}_3, n \right)
+    \text{MC} = \left( \vec{LS}, SS, \vec{TS}, n \right)
 \end{equation}
 
-Where:
+where:
 \begin{itemize}
-    \item $\vec{CF}_1 = \sum_{i=1}^{n} \vec{x}_i$ is the linear sum of the $n$ $d$-dimensional data points.
-    \item $CF_2 = \sum_{i=1}^{n} \vec{x}_i \cdot \vec{x}_i$ is the sum of squares of data points
-          (used for variance).
-    \item $\vec{CF}_3 = \sum_{i=1}^{n} t_i$ is the linear sum of the timestamps of the points.
-    \item $n$ is the number of data points in the micro-cluster.
+    \item $\vec{LS} = \sum_{i=1}^{n} \vec{x}_i$ is the linear sum of $n$ $d$-dimensional data points,
+    \item $SS = \sum_{i=1}^{n} \vec{x}_i \cdot \vec{x}_i$ is the sum of squares,
+    \item $\vec{TS} = \sum_{i=1}^{n} t_i$ is the sum of timestamps,
+    \item $n$ is the number of points contained in the micro-cluster.
 \end{itemize}
 
-From these components, we can compute useful statistics:
-
+From these quantities, the following statistics can be derived:
 \begin{itemize}
     \item \textbf{Centroid}:
           \begin{equation}
-              \vec{\mu} = \frac{\vec{CF}_1}{n}
+              \vec{\mu} = \frac{\vec{LS}}{n}
           \end{equation}
     \item \textbf{Radius}:
           \begin{equation}
-              \sigma = \sqrt{ \frac{CF_2}{n} - \left( \frac{\vec{CF}_1}{n} \right)^2 }
+              \sigma = \sqrt{ \frac{SS}{n} - \left( \frac{||\vec{LS}||}{n} \right)^2 }
           \end{equation}
 \end{itemize}
 
-A data point $\vec{x}$ is assigned to the nearest micro-cluster if its distance
-to the micro-cluster's centroid is less than a predefined threshold, often
-related to the cluster's radius.
+Incoming data points are assigned to the nearest micro-cluster if the distance
+to its centroid is below a threshold, often proportional to the cluster's
+radius. If the point does not fit within any existing micro-cluster, a new one
+is created. To maintain a fixed budget of micro-clusters (denoted by $q$), the
+algorithm either merges the two closest micro-clusters or removes the least
+recently updated one.
 
-The set of micro-clusters is maintained dynamically as new data arrives:
-
-\begin{itemize}
-    \item If the point fits in an existing micro-cluster (within radius), it is absorbed.
-    \item If not, a new micro-cluster is created.
-    \item If the number of micro-clusters exceeds a budget $q$, two nearest
-          micro-clusters are merged, or the least recently used cluster is deleted.
-\end{itemize}
-
-The merging of two micro-clusters $MC_1$ and $MC_2$ is defined by:
+When two micro-clusters $MC_1$ and $MC_2$ are merged, the resulting
+micro-cluster is defined as:
 
 \begin{align}
-    \vec{CF}_1^{\text{new}} & = \vec{CF}_1^{(1)} + \vec{CF}_1^{(2)} \\
-    CF_2^{\text{new}}       & = CF_2^{(1)} + CF_2^{(2)}             \\
-    \vec{CF}_3^{\text{new}} & = \vec{CF}_3^{(1)} + \vec{CF}_3^{(2)} \\
-    n^{\text{new}}          & = n^{(1)} + n^{(2)}
+    \vec{LS}^{\text{new}} & = \vec{LS}^{(1)} + \vec{LS}^{(2)} \\
+    SS^{\text{new}}       & = SS^{(1)} + SS^{(2)}             \\
+    \vec{TS}^{\text{new}} & = \vec{TS}^{(1)} + \vec{TS}^{(2)} \\
+    n^{\text{new}}        & = n^{(1)} + n^{(2)}
 \end{align}
 
-At user-specified queries or time intervals, the offline component is triggered
-to perform macro-clustering. This involves:
+\paragraph{Pyramidal Time Frame} To support temporal analysis, CluStream maintains snapshots of the current set
+of micro-clusters at multiple temporal granularities. Snapshots are stored at
+exponentially spaced intervals (e.g., 1, 2, 4, 8, $\dots$ time units), forming
+a pyramidal time frame that allows efficient reconstruction of historical
+cluster states with logarithmic storage complexity.
 
-\begin{itemize}
-    \item Taking a snapshot of the current micro-clusters.
-    \item Applying a clustering algorithm (e.g., $k$-Means) on the centroids of the
-          micro-clusters, weighted by their $n$ values.
-\end{itemize}
+\paragraph{Offline Macro-Clustering} At user-specified intervals or upon query, the offline phase performs
+macro-clustering using the current or historical micro-cluster summaries. This
+typically involves applying a conventional clustering algorithm (e.g., weighted
+$k$-Means) to the centroids of the micro-clusters, where each centroid is
+weighted by the number of data points $n$ it represents. This enables efficient
+clustering over a condensed, noise-reduced representation of the data stream.
 
-This strategy enables analysis over a condensed representation of the data
-stream, reducing computational costs significantly.
-
-To support temporal analysis, CluStream maintains snapshots of micro-cluster
-sets at different time granularities. This forms a pyramidal pattern, trading
-off between storage space and temporal resolution.
+This modular architecture enables CluStream to efficiently handle high-speed
+data streams while supporting accurate and scalable offline analysis.
 
 \section{Tracking Clusters Algorithms}\label{sec:tracking_clusters_algorithms}
 
@@ -230,8 +216,8 @@ Transitions are categorized as:
     \item Internal Transition: Changes in size or centroid within a surviving cluster
 \end{itemize}
 
-This directly aligns with the transition framework from Table in problem
-formulation, but requires pre-defined overlap thresholds and can manage only
+This directly aligns with the transition framework from Table~\ref{table:cluster_transitions} 
+but requires pre-defined overlap thresholds and can manage only
 clusters with enumeration representation.
 
 \textsc{MONIC+} (Ntoutsi et al.~\cite{monic_plus}) generalizes the overlap function by incorporating cluster-type-specific
@@ -325,7 +311,7 @@ and distinguishing between transient and persistent transitions.
 
 Namitha et al.~\cite{namitha_dynamic_clustering_1} proposed a method that
 combines CluStream with an estimation of the number of macro-clusters using the
-Ordered Multiple Runs of k-Means (OMRk) algorithm. A Simplified Silhouette
+Ordered Multiple Runs of k-Means (OMRk)~\cite{omrk} algorithm. A Simplified Silhouette
 index is used as the relative clustering validity criterion. Macro-clustering
 is performed over fixed-size windows. Their model explicitly considers external
 transitions such as \textit{survival}, \textit{absorption}, and \textit{split}:
@@ -360,7 +346,7 @@ from $C_i$).
 
 In a subsequent work, Namitha et al.~\cite{namitha_dynamic_clustering_2}
 proposed replacing the fixed-size window approach with a drift detection
-mechanism based on the Page-Hinkley test. For each new data point, the distance
+mechanism based on the Page-Hinkley test~\cite{page_hinkley}. For each new data point, the distance
 to the nearest cluster is monitored to detect distributional changes. This
 approach triggers macro-clustering only when necessary and explicitly
 integrates the MONIC algorithm for cluster transition tracking.

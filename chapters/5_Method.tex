@@ -2,10 +2,10 @@
 
 This chapter presents a novel framework for addressing the dynamic clustering
 problem. It begins with the introduction of a new class of transitions that
-incorporates the recurrence of specific cluster evolutions over time, enabling
-a more realistic modeling of evolving data streams. A new formulation of
-overlapping scores is then proposed for both spherical and Gaussian clusters,
-allowing for a more precise quantification of cluster overlap. In addition, a
+incorporates the recurrence of clusters over time, enabling a more realistic
+modeling of evolving data streams. A new formulation of overlapping scores is
+then proposed for both spherical and Gaussian clusters, allowing for an easy
+thresholding for detecting overlapping between clusters. In addition, a
 triggering mechanism based on the CluStream~\cite{clustream} micro-clustering
 algorithm is introduced to detect significant structural changes in the data.
 The chapter concludes with a detailed description of the framework's
@@ -21,9 +21,9 @@ transitions are modeled using a structured and interpretable representation. As
 described in MEC~\cite{mec}, one effective approach is to represent transitions
 between two clustering results as a \textbf{bipartite graph}. In this graph,
 each node represents a cluster at a specific time point, and edges indicate the
-degree of overlap between clusters across two consecutive timestamps.
+presence of overlap between clusters across two consecutive timestamps.
 
-This representation enables a principled framework for identifying and
+This representation enables a methodical framework for identifying and
 classifying transition patterns. Each edge encodes a correspondence between
 clusters, allowing the system to categorize transitions such as
 \emph{survivals}, \emph{splits}, \emph{merges}, \emph{appearances}, and
@@ -126,7 +126,7 @@ For clusters with approximately spherical shapes, the following \textbf{Custom
 where:
 \begin{itemize}
       \item $ d(\mu_1, \mu_2) $ is the Euclidean distance between the centers of clusters $ c_1 $ and $ c_2 $,
-      \item $ r_1 $ and $ r_2 $ represent the respective radii (or characteristic sizes) of the clusters.
+      \item $ r_1 $ and $ r_2 $ represent the respective radii of the clusters.
 \end{itemize}
 
 \textbf{Properties and Interpretation:}
@@ -162,11 +162,11 @@ where:
 \subsubsection*{Effective Overlapping Score for Gaussian Clusters}
 
 Building upon the idea of the \textit{Custom Overlapping
-      Score}~\ref{eq:custom_os}, which assumes spherical symmetry, the
+      Score}~(\ref{eq:custom_os}), which assumes spherical symmetry, the
 \textbf{Effective Overlapping Score (EffectiveOS)} generalizes the concept to
 clusters modeled as multivariate Gaussian distributions. This allows for the
-consideration of anisotropy and correlated features by incorporating covariance
-structure into the overlap estimation.
+consideration of directional variability and correlated features by
+incorporating covariance structure into the overlap estimation.
 
 The \textbf{EffectiveOS} is defined as:
 

@@ -261,11 +261,11 @@ in streaming scenarios where incoming data can be potentially infinite.
 
 Key characteristics of stream learning include:
 \begin{itemize}
-    \item single-pass constraints: each data point is typically processed once due to
+    \item \emph{single-pass constraints}: each data point is typically processed once due to
           time and memory limitations;
-    \item bounded resources: algorithms must operate under strict memory and
+    \item \emph{bounded resources}: algorithms must operate under strict memory and
           computational constraints;
-    \item adaptivity: the learning process must be robust to changes in the data
+    \item \emph{adaptivity}: the learning process must be robust to changes in the data
           distribution over time.
 \end{itemize}
 
@@ -276,40 +276,83 @@ distribution.
 \section{Explainability in Machine Learning}\label{sec:explainability}
 
 Explainability in Machine Learning refers to the capacity to understand and
-interpret the internal mechanics or predictions of a model. As ML systems are
-increasingly used in critical domains such as healthcare, finance, and
-autonomous systems, understanding how and why decisions are made is essential
-for building trust, ensuring accountability, and complying with ethical or
-legal standards.
+interpret the internal mechanics or predictions of a model. As machine learning
+systems are increasingly deployed in high-stakes domains such as healthcare,
+finance, and autonomous systems, understanding how and why decisions are made
+is essential for building trust, ensuring accountability, and complying with
+ethical or legal standards~\cite{importance_of_explainabilty}.
 
-Some models are inherently interpretable, such as decision trees, linear
-regression, and logistic regression, where the influence of each feature is
-explicitly encoded in the model's structure or coefficients. However, many
-state-of-the-art models—such as deep neural networks, support vector machines,
-and ensemble methods like Random Forests and Gradient Boosting Machines—are
-considered black boxes due to their complexity.
+Some models are inherently interpretable---such as decision trees, linear
+regression, and logistic regression---where the influence of each feature is
+explicitly encoded in the model's structure or coefficients. For example, in
+linear models, the prediction for an instance $x \in \mathbb{R}^d$ is given by:
+\begin{equation}
+    \hat{y} = w^\top x + b,
+\end{equation}
+where each coefficient $w_i$ directly indicates the contribution of feature
+$x_i$ to the prediction.
 
-To make these models more transparent, various post-hoc interpretability
-techniques have been developed. One common approach is \emph{feature
-    importance}, which quantifies how much each input feature contributes to the
-model's predictions. In tree-based models, feature importance is typically
-computed by aggregating the reduction in impurity (e.g., Gini or entropy)
-caused by splits involving each feature across all trees. In permutation-based
-importance, a feature's values are randomly shuffled, and the resulting
-decrease in model performance indicates its importance.
+However, many high-performing models---such as deep neural networks (DNNs),
+support vector machines (SVMs), and ensemble methods like Random Forests and
+Gradient Boosting Machines---are considered \emph{black boxes} due to their
+complexity and lack of direct interpretability.
 
-Beyond global explanations, local interpretability techniques aim to explain
-individual predictions. \textbf{LIME} (Local Interpretable Model-agnostic
-Explanations) builds a local surrogate model (usually linear) around a
-prediction to approximate the complex model's decision boundary. \textbf{SHAP}
-(SHapley Additive exPlanations) uses game theory to attribute each feature's
-contribution to a particular prediction, ensuring properties like consistency
-and local accuracy.
+To address this, a variety of \emph{post-hoc} interpretability techniques have
+been developed. These can be broadly categorized into global (model-level) and
+local (prediction-level) explanations.
 
-These explainability tools enable practitioners to better understand, trust,
-and debug machine learning models. They also help uncover model biases, improve
-transparency in automated decision-making, and ensure safe deployment in
-dynamic, real-world environments.
+\subsection*{Global Explanations}
+
+One widely used approach is \textbf{feature importance}, which quantifies the
+contribution of each input feature to the model's overall performance:
+
+\begin{itemize}
+    \item In tree-based models, feature importance is often computed by summing the
+          decrease in impurity (e.g., Gini index or entropy) resulting from splits on
+          that feature across all trees: \begin{equation} \text{Importance}(f_i) =
+              \sum_{t \in T} \sum_{s \in \text{Splits}(t, f_i)} \Delta \text{Impurity}(s),
+          \end{equation}
+          where $T$ is the set of trees in the ensemble, and $s$ are the split points
+          involving feature $f_i$.
+
+    \item In \textbf{permutation importance}, the values of feature $f_i$ are randomly
+          permuted to break the association with the target, and the drop in performance
+          (e.g., accuracy or $R^2$) is recorded:
+          \begin{equation} \text{Importance}_{\text{perm}}(f_i) =
+              \mathcal{M}(\mathcal{D}) - \mathcal{M}(\mathcal{D}_{\pi_i}),
+          \end{equation}
+          where $\mathcal{M}(\cdot)$ is the model evaluation metric and
+          $\mathcal{D}_{\pi_i}$ denotes the dataset with feature $f_i$ permuted.
+\end{itemize}
+
+\textbf{Local interpretability} methods explain individual predictions by approximating
+the decision boundary around a specific input:
+
+\begin{itemize}
+    \item \textbf{LIME} (Local Interpretable Model-agnostic Explanations)~\cite{lime} fits a
+          simple surrogate model (usually linear) around the neighborhood of the instance $x$ by
+          minimizing a weighted loss:
+          \begin{equation}
+              \mathcal{L}(f, g, \pi_x) = \sum_{z \in \mathcal{Z}} \pi_x(z) (f(z) - g(z))^2 + \Omega(g),
+          \end{equation}
+          where $f$ is the original model, $g$ is the interpretable surrogate, $\pi_x(z)$
+          is a locality-aware kernel, and $\Omega(g)$ penalizes model complexity.
+
+    \item \textbf{SHAP} (SHapley Additive exPlanations)~\cite{shap} assigns each feature an
+          additive contribution to the prediction based on Shapley values from cooperative game theory:
+          \begin{equation}
+              f(x) = \phi_0 + \sum_{i=1}^{d} \phi_i,
+          \end{equation}
+          where $\phi_0$ is the expected model output and $\phi_i$ quantifies the
+          contribution of feature $i$ to the prediction. SHAP values are uniquely
+          characterized by properties such as \textit{local accuracy},
+          \textit{missingness}, and \textit{consistency}.
+\end{itemize}
+
+These tools help practitioners better understand, trust, and debug machine
+learning models. As machine learning continues to permeate real-world
+applications, explainability will remain a cornerstone of responsible AI
+development.
 
 \section{Data Drift}\label{sec:data_drift}
 Data drift refers to the phenomenon where the statistical properties of data
@@ -324,37 +367,64 @@ the data and the target (concept drift). Detecting and adapting to data drift
 is an essential part of maintaining long-term model performance.
 
 \subsection*{Drift Definitions}\label{subsec:drift_definitions}
-Drift can manifest in several forms, each affecting the model in different
-ways; following the definitions provided by Gama et
-al.~\cite{drift_adaptation_survey}:
+Following the definitions provided by Gama et
+al.~\cite{drift_adaptation_survey}, this section outlines formal definitions of
+\textbf{concept drift} and its key variants.
 
-\textbf{Input Drift} (also known as covariate shift): This refers to changes in the distribution
-of input features over time. Formally, this occurs when:
+Concept drift is said to occur between two time points $t_0$ and $t_1$ if:
 \begin{equation}
-    P_t(X) \neq P_{t+\Delta}(X)
+    \exists X : p_{t_0}(X, y) \neq p_{t_1}(X, y)
 \end{equation}
-where $ P_t(X) $ is the distribution of input data at time $ t $, and $
-    P_{t+\Delta}(X) $ is the distribution at a later time. For example, new types
-of customer behavior or market conditions may introduce patterns that the model
-has not seen before.
+where $p_t(X, y)$ represents the joint distribution of the input variables $X$
+and the target variable $y$ at time $t$.
 
-\textbf{Prediction Drift}: This type of drift occurs when the distribution of the predicted
-labels changes over time:
-\begin{equation}
-    P_t(\hat{Y}) \neq P_{t+\Delta}(\hat{Y})
-\end{equation}
-It typically signals that the model is producing different outputs over time
-for similar inputs, possibly due to changes in the input distribution or model
-behavior.
+This change in the joint distribution can be decomposed into the following
+components:
+\begin{itemize}
+    \item A shift in the prior distribution of the target variable: $p(y)$,
+    \item A change in the class-conditional distribution of the inputs: $p(X \mid y)$,
+    \item A resulting shift in the posterior distribution: $p(y \mid X)$.
+\end{itemize}
 
-\textbf{Concept Drift}: This refers to changes in the conditional distribution of the target
-variable given the input:
-\begin{equation}
-    P_t(Y \mid X) \neq P_{t+\Delta}(Y \mid X)
-\end{equation}
-This is the most critical type of drift, as it directly affects the validity of
-the model's assumptions. Concept drift can render the model obsolete if not
-addressed, often requiring retraining or adaptation mechanisms.
+From the perspective of predictive modeling, two principal types of concept
+drift are commonly distinguished:
+
+\begin{enumerate}
+    \item \textbf{Real Concept Drift}: Defined as a change in the posterior
+          distribution over time:
+          \begin{equation}
+              p_{t_0}(y \mid X) \neq p_{t_1}(y \mid X)
+          \end{equation}
+          This type of drift affects the underlying decision function.
+
+    \item \textbf{Virtual Concept Drift}: Occurs when the marginal distribution
+          of the input features changes while the posterior distribution remains stable:
+          \begin{equation}
+              p_{t_0}(X) \neq p_{t_1}(X) \quad \text{and} \quad p_{t_0}(y \mid X) =
+              p_{t_1}(y \mid X)
+          \end{equation}
+          Although the optimal predictive function remains unchanged, this form
+          of drift may still impact performance through mechanisms such as covariate
+          shift, sampling bias, or changes in feature relevance.
+\end{enumerate}
+From a model maintenance perspective, only changes in the posterior distribution $p(y \mid X)$—as
+seen in real concept drift—have a direct impact on the predictive function and thus
+necessitate adaptation or retraining. In contrast, virtual drift, while potentially
+affecting performance indirectly, does not alter the relationship between inputs and
+outputs and may not always require immediate corrective measures.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{my_images/drift_types.png}
+    \caption{Types of concept drift. Source:~\cite{drift_adaptation_survey}}\label{fig:concept_drift_types}
+\end{figure}
+
+Although real concept drift is formally defined by changes in $p(y \mid X)$, in
+practice, such changes may manifest through observable shifts in the marginal
+input distribution $p(X)$, particularly when certain input regions become more
+prevalent or undergo structural changes. As a result, analyzing how $p(X)$
+evolves over time can offer valuable insights into the nature and causes of
+concept drift—even when true labels are unavailable.
 
 \subsection*{Drift Detection}\label{subsec:drift_detection}
 Concept drift detection identifies changes in the statistical properties of
@@ -362,14 +432,14 @@ data streams that affect model performance. A typical framework consists of
 four main stages~\cite{learning_under_concept_drift}:
 
 \begin{enumerate}
-    \item \textbf{Data Retrieval}: Organizes incoming data into chunks 
-    suitable for analysis.
-    \item \textbf{Data Modeling (Optional)}: Transforms or reduces the data 
-    for efficiency or interpretability.
-    \item \textbf{Test Statistic Computation}: Quantifies differences between 
-    past and current data or model performance.
-    \item \textbf{Hypothesis Testing}: Determines whether detected differences 
-    are statistically significant.
+    \item \textbf{Data Retrieval}: Organizes incoming data into chunks
+          suitable for analysis.
+    \item \textbf{Data Modeling (Optional)}: Transforms or reduces the data
+          for efficiency or interpretability.
+    \item \textbf{Test Statistic Computation}: Quantifies differences between
+          past and current data or model performance.
+    \item \textbf{Hypothesis Testing}: Determines whether detected differences
+          are statistically significant.
 \end{enumerate}
 
 These stages are common across most detection algorithms and support flexible
@@ -378,27 +448,27 @@ implementation across streaming scenarios.
 Drift detection algorithms can be broadly categorized into three groups based
 on the nature of their test statistics.
 
-\textbf{Error-Rate-Based Methods} monitor the performance of a predictive model. 
-A significant increase in error rate suggests concept drift. 
+\textbf{Error-Rate-Based Methods} monitor the performance of a predictive model.
+A significant increase in error rate suggests concept drift.
 Notable algorithms include:
 
 \begin{itemize}
-    \item \emph{DDM} (Drift Detection Method)~\cite{ddm}: Detects drift when the 
-    classification error increases beyond statistical thresholds.
-    \item \emph{EDDM}~\cite{eddm}: Improves DDM by considering the distance between errors, 
-    making it more sensitive to gradual drifts.
-    \item \emph{ADWIN}~\cite{adwin}: Maintains a variable-length window and compares 
-    statistics between subwindows.
+    \item \emph{DDM} (Drift Detection Method)~\cite{ddm}: Detects drift when the
+          classification error increases beyond statistical thresholds.
+    \item \emph{EDDM}~\cite{eddm}: Improves DDM by considering the distance between errors,
+          making it more sensitive to gradual drifts.
+    \item \emph{ADWIN}~\cite{adwin}: Maintains a variable-length window and compares
+          statistics between subwindows.
 \end{itemize}
 
 \textbf{Distribution-Based Methods} compare statistical properties of data distributions directly,
 often in an unsupervised setting.
 
 \begin{itemize}
-    \item \emph{LSDD}~\cite{lsdd}: Uses a kernel-based method to measure the difference 
-    between distributions.
-    \item \emph{ITA}~\cite{ita} (Information-Theoretic Approach): Relies on entropy and divergence 
-    measures to detect distributional changes.
+    \item \emph{LSDD}~\cite{lsdd}: Uses a kernel-based method to measure the difference
+          between distributions.
+    \item \emph{ITA}~\cite{ita} (Information-Theoretic Approach): Relies on entropy and divergence
+          measures to detect distributional changes.
     \item \emph{SyncStream}~\cite{syncstream}: Captures synchronized structural changes in multidimensional streams.
 \end{itemize}
 
@@ -406,12 +476,12 @@ often in an unsupervised setting.
 hierarchically to improve robustness and adaptivity.
 
 \begin{itemize}
-    \item \emph{JIT} (Just-in-Time Drift Detection)~\cite{jit}: Tests various feature combinations 
-    for localized drift detection.
-    \item \emph{HHT} (Hierarchical Hypothesis Testing)~\cite{hht}: Combines quick detection with 
-    secondary validation to reduce false alarms.
-    \item \emph{e-Detector}~\cite{e_detector}: Leverages an ensemble of heterogeneous detectors to 
-    balance early detection and accuracy.
+    \item \emph{JIT} (Just-in-Time Drift Detection)~\cite{jit}: Tests various feature combinations
+          for localized drift detection.
+    \item \emph{HHT} (Hierarchical Hypothesis Testing)~\cite{hht}: Combines quick detection with
+          secondary validation to reduce false alarms.
+    \item \emph{e-Detector}~\cite{e_detector}: Leverages an ensemble of heterogeneous detectors to
+          balance early detection and accuracy.
 \end{itemize}
 
 Each category addresses different aspects of the drift detection problem.
@@ -507,8 +577,8 @@ referred to as \emph{concept feature importance for drift explainability},
 highlights which features $x_i$ contribute most to $f(x)$, and hence to the
 difference between $P$ and $Q$.
 
-Understanding the drivers of drift is essential for effective model management.
-Without explainability, decisions about retraining may be based on guesswork,
-potentially leading to unnecessary updates or degraded performance. Drift
-explainability ensures that model updates are both necessary and well-targeted,
-guided by principled statistical and model-based insights.
+Understanding the factors behind drift is essential for effective model
+management. Without explainability, decisions about retraining may be based on
+guesswork, potentially leading to unnecessary updates or degraded performance.
+Drift explainability ensures that model updates are both necessary and
+well-targeted, guided by principled statistical and model-based insights.
