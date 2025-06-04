@@ -116,78 +116,125 @@ partitions:
 \end{equation}
 where $\mathbf{S}$ denotes the space of valid partitions of $\mathcal{D}$.
 
-\subsection*{Clustering Algorithms}
-Clustering methods are generally categorized based on their underlying
-assumptions and mechanisms, as discussed by Ezugwu et
-al.~\cite{clustering_survey}:
+\subsection{Clustering Algorithms}
+A wide range of clustering algorithms has been developed, each based on
+different assumptions and mechanisms. These include partition-based,
+hierarchical, density-based, fuzzy, distribution-based, grid-based, and
+model-based approaches~\cite{clustering_survey}. The methods differ in how they
+define similarity, form clusters, and manage noise or outliers.
 
-\textbf{Partition-based Clustering:}
-These algorithms divide the dataset into a set number of non-overlapping
-subsets (clusters) by optimizing a specific criterion.
+Among these, \textbf{K-means} and \textbf{Gaussian Mixture Models (GMM)} are
+two widely used algorithms that effectively summarize data through compact
+cluster representations. As examples of the partition-based and
+distribution-based paradigms, respectively, both algorithms utilize summary
+statistics—such as centroids, means, radii, and covariance matrices—to
+characterize clusters. Such concise and informative descriptions are
+particularly beneficial in applications like streaming clustering and object
+tracking. Detailed descriptions of these algorithms are provided in the
+following sections.
+
+\subsection*{K-means Clustering}
+K-means~\cite{k_means} is a partition-based clustering algorithm that divides a
+dataset into $k$ non-overlapping clusters by minimizing the within-cluster sum
+of squared distances. Given a dataset $\mathcal{X} = \{x_1, x_2, \ldots, x_n\}$
+with $x_i \in \mathbb{R}^d$, K-means aims to find a set of $k$ centroids
+$\{\mu_1, \mu_2, \ldots, \mu_k\}$ that minimize the following objective
+function:
+
+\begin{equation}
+    J = \sum_{i=1}^{n} \sum_{j=1}^{k} r_{ij} \| x_i - \mu_j \|^2
+\end{equation}
+
+where:
 \begin{itemize}
-    \item \emph{K-means}~\cite{k_means}: Partitions data into $k$ clusters by minimizing
-          the sum of squared distances between data points and their assigned
-          cluster centroid.
-    \item \emph{K-medoids (PAM)}~\cite{k_medoids}: Similar to K-means but selects actual
-          data points (medoids) as cluster centers, making it more robust to
-          outliers.
+    \item $r_{ij} = 1$ if data point $x_i$ is assigned to cluster $j$, and $0$ otherwise.
+    \item $\mu_j$ is the centroid of cluster $j$.
 \end{itemize}
 
-\textbf{Hierarchical Clustering:}
-These methods create a hierarchy of clusters either by progressively
-merging (agglomerative) or splitting (divisive) clusters.
+The algorithm proceeds iteratively via two steps:
+\begin{enumerate}
+    \item \textbf{Assignment step:} Assign each point to the nearest centroid:
+          \begin{equation}
+              r_{ij} =
+              \begin{cases}
+                  1 & \text{if } j = \arg \min_{l} \|x_i - \mu_l\|^2 \\
+                  0 & \text{otherwise}
+              \end{cases}
+          \end{equation}
+    \item \textbf{Update step:} Recompute the centroids as the mean of the assigned points:
+          \begin{equation}
+              \mu_j = \frac{\sum_{i=1}^{n} r_{ij} x_i}{\sum_{i=1}^{n} r_{ij}}
+          \end{equation}
+\end{enumerate}
+
+This process continues until convergence, typically when assignments no longer
+change or the objective function stabilizes.
+
+Once the final clusters are obtained, each cluster $j$ can be summarized using
+its centroid $\mu_j$ and a corresponding radius that quantifies the cluster’s
+spread. The radius is typically defined as the maximum or average Euclidean
+distance between the centroid and the points assigned to that cluster.
+
+\subsection*{Gaussian Mixture Models (GMM)}
+
+GMM~\cite{gaussian_mixtures} is a distribution-based clustering method that
+models data as a mixture of $k$ Gaussian distributions. Each component
+(cluster) is represented by a multivariate Gaussian with its own mean and
+covariance.
+
+The probability density function for a GMM is given by:
+
+\begin{equation}
+    p(x_i) = \sum_{j=1}^{k} \pi_j \mathcal{N}(x_i \mid \mu_j, \Sigma_j)
+\end{equation}
+
+where:
 \begin{itemize}
-    \item \emph{BIRCH}~\cite{birch}: Efficient for large datasets; incrementally
-          constructs a clustering feature (CF) tree and applies clustering
-          to its leaves.
-    \item \emph{CURE}~\cite{cure}:  Selects well-scattered points in each cluster
-          and shrinks them towards the centroid to better handle arbitrary
-          shapes and outliers.
+    \item $\pi_j$ is the mixing coefficient for cluster $j$, with $\sum_{j=1}^{k} \pi_j = 1$
+    \item $\mathcal{N}(x_i \mid \mu_j, \Sigma_j)$ is the multivariate Gaussian density:
+          \begin{equation}
+              \mathcal{N}(x \mid \mu, \Sigma) = \frac{1}{(2\pi)^{d/2} |\Sigma|^{1/2}}
+              \exp \left( -\frac{1}{2}(x - \mu)^\top \Sigma^{-1} (x - \mu) \right)
+          \end{equation}
 \end{itemize}
 
-\textbf{Density-based Clustering:}
-Clusters are formed based on areas of high density separated by areas
-of low density, allowing detection of arbitrarily shaped clusters.
-\begin{itemize}
-    \item \emph{DBSCAN}~\cite{dbscan}: Groups points that are closely packed and labels
-          as outliers those lying in low-density regions.
-    \item \emph{OPTICS}~\cite{optics}: Extends DBSCAN by capturing the clustering structure
-          at multiple density levels without a fixed threshold.
-\end{itemize}
+The parameters $\{\pi_j, \mu_j, \Sigma_j\}_{j=1}^k$ are estimated using the
+Expectation-Maximization (EM) algorithm:
 
-\textbf{Fuzzy Clustering:}
-Unlike hard clustering, these algorithms assign each data point a membership
-value for each cluster, allowing soft assignments.
-\begin{itemize}
-    \item \emph{Fuzzy C-Means (FCM)}~\cite{fuzzy_c_means}: Minimizes an objective function by
-          allowing data points to belong to multiple clusters with varying degrees.
-\end{itemize}
+\begin{enumerate}
+    \item \textbf{E-step:} Compute the posterior probabilities for each point:
+          \begin{equation}
+              \gamma_{ij} = \frac{\pi_j \mathcal{N}(x_i \mid \mu_j, \Sigma_j)}
+              {\sum_{l=1}^{k} \pi_l \mathcal{N}(x_i \mid \mu_l, \Sigma_l)}
+          \end{equation}
 
-\textbf{Distribution-based Clustering:}
-These methods assume the data is generated from a mixture of probabilistic
-distributions and infer the parameters of those distributions.
-\begin{itemize}
-    \item \emph{Gaussian Mixture Models (GMM)}~\cite{gaussian_mixtures}: Uses the Expectation-Maximization (EM)
-          algorithm to model data as a mixture of Gaussians, providing soft cluster memberships.
-\end{itemize}
+    \item \textbf{M-step:} Update parameters based on current posterior probabilities:
+          \begin{align}
+              \pi_j^{\text{new}}    & = \frac{1}{n} \sum_{i=1}^{n} \gamma_{ij}                            \\
+              \mu_j^{\text{new}}    & = \frac{\sum_{i=1}^{n} \gamma_{ij} x_i}{\sum_{i=1}^{n} \gamma_{ij}} \\
+              \Sigma_j^{\text{new}} & = \frac{\sum_{i=1}^{n} \gamma_{ij}(x_i - \mu_j)(x_i - \mu_j)^\top}
+              {\sum_{i=1}^{n} \gamma_{ij}}
+          \end{align}
+\end{enumerate}
 
-\textbf{Grid-based Clustering:}
-These algorithms divide the data space into a finite number of grid cells
-and perform clustering on the grid structure.
-\begin{itemize}
-    \item \emph{CLIQUE}~\cite{clique}: Combines grid-based and density-based methods
-          to efficiently identify clusters in high-dimensional data.
-\end{itemize}
+The EM algorithm iterates until the log-likelihood converges. Unlike K-means,
+GMM provides soft cluster assignments by computing the posterior probability of
+each data point belonging to each cluster. The final hard cluster assignment
+for a data point can be obtained by selecting the component with the highest
+posterior probability:
 
-\textbf{Model-based Clustering:}
-These approaches assume a model for each cluster and optimize the fit of the model to the data.
-\begin{itemize}
-    \item \emph{Self-Organizing Maps (SOM)}~\cite{som}: A type of neural network that
-          maps high-dimensional input data into a lower-dimensional (typically 2D)
-          representation while preserving topological relationships.
-\end{itemize}
+\begin{equation}
+    \hat{z}_i = \arg\max_{j} \, \gamma_{ij}
+\end{equation}
 
-\subsection*{Clustering Evaluation Metrics}
+where $\gamma_{ij}$ denotes the posterior probability of component $j$ for data
+point $x_i$.
+
+Each Gaussian component in a GMM is naturally described by its mean vector
+$\mu_j$ and covariance matrix $\Sigma_j$, which together define the shape,
+size, and orientation of the cluster in the feature space.
+
+\subsection{Clustering Evaluation Metrics}
 
 Clustering evaluation metrics are broadly classified into \textbf{internal} and
 \textbf{external} criteria. Internal metrics assess the quality of a clustering
@@ -296,8 +343,8 @@ One widely used approach is \textbf{feature importance}, which quantifies the
 contribution of each input feature to the model's overall performance:
 
 \begin{itemize}
-    \item In tree-based ensamble models, feature importance is often computed by summing the
-          decrease in impurity (e.g., Gini index or entropy) resulting from splits on
+    \item In tree-based ensamble models, feature importance is often computed by summing
+          the decrease in impurity (e.g., Gini index or entropy) resulting from splits on
           that feature across all trees: \begin{equation} \text{Importance}(f_i) =
               \sum_{t \in T} \sum_{s \in \text{Splits}(t, f_i)} \Delta \text{Impurity}(s),
           \end{equation}
@@ -397,11 +444,12 @@ drift are commonly distinguished:
           shift, sampling bias, or changes in feature relevance.
 \end{enumerate}
 
-From a model maintenance perspective, only changes in the posterior distribution $p(y \mid X)$—as
-seen in real concept drift—have a direct impact on the predictive function and thus
-necessitate adaptation or retraining. In contrast, virtual drift, while potentially
-affecting performance indirectly, does not alter the relationship between inputs and
-outputs and may not always require immediate corrective measures.
+From a model maintenance perspective, only changes in the posterior
+distribution $p(y \mid X)$—as seen in real concept drift—have a direct impact
+on the predictive function and thus necessitate adaptation or retraining. In
+contrast, virtual drift, while potentially affecting performance indirectly,
+does not alter the relationship between inputs and outputs and may not always
+require immediate corrective measures.
 
 \begin{figure}[h]
     \centering
