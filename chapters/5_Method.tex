@@ -95,11 +95,21 @@ types are introduced: \textbf{reappearance}, \textbf{remerge}, and
 \textbf{resplit}.
 
 \begin{itemize}
-      \item \textbf{Reappearance} occurs when a cluster that previously disappeared re-emerges after a delay. To detect this, information about disappeared clusters is retained. If a new cluster in a future timestep significantly overlaps with one of these stored clusters, it is classified as a reappearance rather than a new appearance.
+      \item \textbf{Reappearance} occurs when a cluster that previously
+            disappeared re-emerges after a delay. To detect this, information
+            about disappeared clusters is retained. If a new cluster in a future
+            timestep significantly overlaps with one of these stored clusters, it
+            is classified as a reappearance rather than a new appearance.
 
-      \item \textbf{Remerge} describes a situation in which a previously merged cluster splits and, at a later point, its components reassemble into a similar structure. The system tracks the identities of the original components, allowing for recognition of this reformation.
+      \item \textbf{Remerge} describes a situation in which a previously
+            merged cluster splits and, at a later point, its components reassemble
+            into a similar structure. The system tracks the identities of the
+            original components, allowing for recognition of this reformation.
 
-      \item \textbf{Resplit} is the converse case, where clusters that previously resulted from a split later recombine. If the new merged cluster shows significant overlap with the original parent cluster, the event is identified as a resplit.
+      \item \textbf{Resplit} is the converse case, where clusters that
+            previously resulted from a split later recombine. If the new merged
+            cluster shows significant overlap with the original parent cluster,
+            the event is identified as a resplit.
 \end{itemize}
 
 By incorporating these extended transition types, the framework enables not
@@ -215,6 +225,8 @@ where:
             the EffectiveOS still relies only on statistical summaries (means, covariances, and eigenvalues),
             making it applicable in streaming scenarios where raw data is discarded after summarization.
 \end{itemize}
+
+\section{Novel Triggering Strategy}\label{sec:novel_triggering_strategy}
 
 \section{Proposed Framework}\label{sec:proposed_framework}
 

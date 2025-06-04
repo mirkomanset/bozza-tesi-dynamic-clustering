@@ -1,38 +1,39 @@
 \chapter{Introduction}\label{ch:introduction}
 
 \section{Context}\label{sec:context}
-Machine Learning (ML) has become a foundational technology to solve hard issues
-and construct usable information from large and continually growing bodies of
-data over the last few years. Financial, health, manufacturing, and
-fraud-detection industries have introduced ML models into core decision-making
-systems, driven by advances in computing power, storage, and availability of
-data-generating devices. These environments are increasingly dependent on the
-real-time data streams that flow in from sensors, transactional systems, user
-behavior, and external market feeds.
+In recent years, Machine Learning (ML) has emerged as a foundational technology
+for addressing complex problems and extracting actionable insights from vast
+and continuously expanding datasets. Industries such as finance, healthcare,
+manufacturing, and fraud detection have integrated ML models into their core
+decision-making processes. This integration is largely driven by advancements
+in computing power, data storage capabilities, and the proliferation of
+data-generating devices. These sectors are increasingly reliant on real-time
+data streams originating from sensors, transactional systems, user
+interactions, and external market sources.
 
 In such dynamic settings, the ability to process and analyze data in real time
 is essential. Stream-based learning allows models to adapt quickly to changing
 conditions, allowing for timely and strategic intervention. Deploying and
 maintaining machine learning models over time in production environments poses
-substantial challenges. Of them, one of the most enduring and far-reaching is
-data nonstationarity, the way in which statistical properties of data
-distributions change over time.
+substantial challenges. Among these challenges, one of the most persistent and
+far-reaching is data nonstationarity—the phenomenon where the statistical
+properties of data distributions evolve over time.
 
 Most generalized machine learning algorithms operate under the implicit
 assumption that data are independent and identically distributed (i.i.d.) and
 drawn from a stationary distribution. However, this assumption rarely holds in
 real-world applications. In practice, data distributions often shift or evolve
-over time—a phenomenon known as concept drift. If left unaddressed, concept
-drift can significantly degrade a model's performance. Such drift can arise
-from various factors, including gradual changes in user behavior, shifts in
-regulatory or economic conditions, sensor degradation, software updates, or
-large-scale events like global pandemics.
+over time—a phenomenon known as \emph{drift}. If left unaddressed, drift can
+significantly degrade a model's performance. Such drift can arise from various
+factors, including gradual changes in user behavior, shifts in regulatory or
+economic conditions, sensor degradation, software updates, or large-scale
+events like global pandemics.
 
-To address these challenges, the Machine Learning Operations (MLOps)~\cite{mlops} paradigm
-has emerged as a comprehensive approach that emphasizes automation, monitoring,
-and end-to-end management of machine learning systems throughout their
-lifecycle. A central concern within MLOps is ensuring that deployed models
-remain robust and reliable in the face of concept drift.
+To address these challenges, the Machine Learning Operations
+(MLOps)~\cite{mlops} paradigm has emerged as a comprehensive approach that
+emphasizes automation, monitoring, and end-to-end management of machine
+learning systems throughout their lifecycle. A central concern within MLOps is
+ensuring that deployed models remain robust and reliable in the face of drift.
 
 \section{Motivations}\label{sec:motivations}
 Though various detection methods have been proposed for concept drift, most

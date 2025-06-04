@@ -68,7 +68,9 @@ unique objective function. Instead, each task introduces its own criteria:
     \item In density estimation, the goal is to estimate the data-generating distribution
           $P(\mathbf{x})$ itself.
 \end{itemize}
-Formally, many unsupervised learning problems can be cast as optimization tasks of the form:
+
+Formally, many unsupervised learning problems can be cast as a general
+optimization problem of the form:
 \begin{equation}
     \hat{h} = \underset{f \in \mathcal{F}}{\arg\min} \mathcal{L}(f; \mathbf{x_1,\ldots,x_N}),
 \end{equation}
@@ -86,9 +88,8 @@ partition a dataset into groups, or \textit{clusters}, such that instances
 within the same cluster are more similar to each other than to instances in
 different clusters. It is a key technique for discovering underlying structure,
 compressing data, detecting outliers, and analyzing patterns in
-high-dimensional datasets.
+high-dimensional datasets. Formally, let
 
-Formally, let
 \begin{equation}
     \mathcal{D} = \{\mathbf{x}_1, \mathbf{x}_2, \ldots, \mathbf{x}_N\} \subset \mathbb{R}^d,
 \end{equation}
@@ -259,16 +260,6 @@ This formulation enables the model to adapt continuously over time while
 operating within bounded memory and computational constraints, as required
 in streaming scenarios where incoming data can be potentially infinite.
 
-Key characteristics of stream learning include:
-\begin{itemize}
-    \item \emph{single-pass constraints}: each data point is typically processed once due to
-          time and memory limitations;
-    \item \emph{bounded resources}: algorithms must operate under strict memory and
-          computational constraints;
-    \item \emph{adaptivity}: the learning process must be robust to changes in the data
-          distribution over time.
-\end{itemize}
-
 This paradigm poses unique challenges, particularly in maintaining stability
 while adapting to new information and detecting changes in the underlying data
 distribution.
@@ -282,8 +273,8 @@ finance, and autonomous systems, understanding how and why decisions are made
 is essential for building trust, ensuring accountability, and complying with
 ethical or legal standards~\cite{importance_of_explainabilty}.
 
-Some models are inherently interpretable---such as decision trees, linear
-regression, and logistic regression---where the influence of each feature is
+Some models are inherently interpretable such as decision trees, linear
+regression, and logistic regression where the influence of each feature is
 explicitly encoded in the model's structure or coefficients. For example, in
 linear models, the prediction for an instance $x \in \mathbb{R}^d$ is given by:
 \begin{equation}
@@ -292,22 +283,20 @@ linear models, the prediction for an instance $x \in \mathbb{R}^d$ is given by:
 where each coefficient $w_i$ directly indicates the contribution of feature
 $x_i$ to the prediction.
 
-However, many high-performing models---such as deep neural networks (DNNs),
+However, many high-performing models such as deep neural networks (DNNs),
 support vector machines (SVMs), and ensemble methods like Random Forests and
-Gradient Boosting Machines---are considered \emph{black boxes} due to their
+Gradient Boosting Machines are considered \emph{black boxes} due to their
 complexity and lack of direct interpretability.
 
 To address this, a variety of \emph{post-hoc} interpretability techniques have
 been developed. These can be broadly categorized into global (model-level) and
 local (prediction-level) explanations.
 
-\subsection*{Global Explanations}
-
 One widely used approach is \textbf{feature importance}, which quantifies the
 contribution of each input feature to the model's overall performance:
 
 \begin{itemize}
-    \item In tree-based models, feature importance is often computed by summing the
+    \item In tree-based ensamble models, feature importance is often computed by summing the
           decrease in impurity (e.g., Gini index or entropy) resulting from splits on
           that feature across all trees: \begin{equation} \text{Importance}(f_i) =
               \sum_{t \in T} \sum_{s \in \text{Splits}(t, f_i)} \Delta \text{Impurity}(s),
@@ -407,6 +396,7 @@ drift are commonly distinguished:
           of drift may still impact performance through mechanisms such as covariate
           shift, sampling bias, or changes in feature relevance.
 \end{enumerate}
+
 From a model maintenance perspective, only changes in the posterior distribution $p(y \mid X)$—as
 seen in real concept drift—have a direct impact on the predictive function and thus
 necessitate adaptation or retraining. In contrast, virtual drift, while potentially

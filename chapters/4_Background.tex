@@ -106,7 +106,7 @@ using a variant of the Clustering Feature (CF) vector:
 where:
 \begin{itemize}
     \item $\vec{LS} = \sum_{i=1}^{n} \vec{x}_i$ is the linear sum of $n$ $d$-dimensional data points,
-    \item $SS = \sum_{i=1}^{n} \vec{x}_i \cdot \vec{x}_i$ is the sum of squares,
+    \item $\vec{SS} = \sum_{i=1}^{n} \vec{x}_i \cdot \vec{x}_i$ is the sum of squares,
     \item $\vec{TS} = \sum_{i=1}^{n} t_i$ is the sum of timestamps,
     \item $n$ is the number of points contained in the micro-cluster.
 \end{itemize}
@@ -117,25 +117,25 @@ From these quantities, the following statistics can be derived:
           \begin{equation}
               \vec{\mu} = \frac{\vec{LS}}{n}
           \end{equation}
-    \item \textbf{Radius}:
+    \item \textbf{Standard Deviation}:
           \begin{equation}
-              \sigma = \sqrt{ \frac{SS}{n} - \left( \frac{||\vec{LS}||}{n} \right)^2 }
+              \sigma = \sqrt{ \frac{\vec{SS}}{n} - \left( \frac{\vec{LS}}{n} \right)^2 }
           \end{equation}
 \end{itemize}
 
 Incoming data points are assigned to the nearest micro-cluster if the distance
 to its centroid is below a threshold, often proportional to the cluster's
-radius. If the point does not fit within any existing micro-cluster, a new one
-is created. To maintain a fixed budget of micro-clusters (denoted by $q$), the
-algorithm either merges the two closest micro-clusters or removes the least
-recently updated one.
+standard deviation. If the point does not fit within any existing
+micro-cluster, a new one is created. To maintain a fixed budget of
+micro-clusters (denoted by $q$), the algorithm either merges the two closest
+micro-clusters or removes the least recently updated one.
 
 When two micro-clusters $MC_1$ and $MC_2$ are merged, the resulting
 micro-cluster is defined as:
 
 \begin{align}
     \vec{LS}^{\text{new}} & = \vec{LS}^{(1)} + \vec{LS}^{(2)} \\
-    SS^{\text{new}}       & = SS^{(1)} + SS^{(2)}             \\
+    \vec{SS}^{\text{new}} & = \vec{SS}^{(1)} + \vec{SS}^{(2)} \\
     \vec{TS}^{\text{new}} & = \vec{TS}^{(1)} + \vec{TS}^{(2)} \\
     n^{\text{new}}        & = n^{(1)} + n^{(2)}
 \end{align}
@@ -216,9 +216,9 @@ Transitions are categorized as:
     \item Internal Transition: Changes in size or centroid within a surviving cluster
 \end{itemize}
 
-This directly aligns with the transition framework from Table~\ref{table:cluster_transitions} 
-but requires pre-defined overlap thresholds and can manage only
-clusters with enumeration representation.
+This directly aligns with the transition framework from
+Table~\ref{table:cluster_transitions} but requires pre-defined overlap
+thresholds and can manage only clusters with enumeration representation.
 
 \textsc{MONIC+} (Ntoutsi et al.~\cite{monic_plus}) generalizes the overlap function by incorporating cluster-type-specific
 definitions. MONIC+ supports three distinct types of clusters based on how they are represented and formed:
@@ -311,10 +311,11 @@ and distinguishing between transient and persistent transitions.
 
 Namitha et al.~\cite{namitha_dynamic_clustering_1} proposed a method that
 combines CluStream with an estimation of the number of macro-clusters using the
-Ordered Multiple Runs of k-Means (OMRk)~\cite{omrk} algorithm. A Simplified Silhouette
-index is used as the relative clustering validity criterion. Macro-clustering
-is performed over fixed-size windows. Their model explicitly considers external
-transitions such as \textit{survival}, \textit{absorption}, and \textit{split}:
+Ordered Multiple Runs of k-Means (OMRk)~\cite{omrk} algorithm. A Simplified
+Silhouette index is used as the relative clustering validity criterion.
+Macro-clustering is performed over fixed-size windows. Their model explicitly
+considers external transitions such as \textit{survival}, \textit{absorption},
+and \textit{split}:
 
 \begin{itemize}
     \item \textbf{Survival:} A cluster $X \in C_i$ is said to have survived as $Y \in C_j$ if:
@@ -346,10 +347,11 @@ from $C_i$).
 
 In a subsequent work, Namitha et al.~\cite{namitha_dynamic_clustering_2}
 proposed replacing the fixed-size window approach with a drift detection
-mechanism based on the Page-Hinkley test~\cite{page_hinkley}. For each new data point, the distance
-to the nearest cluster is monitored to detect distributional changes. This
-approach triggers macro-clustering only when necessary and explicitly
-integrates the MONIC algorithm for cluster transition tracking.
+mechanism based on the Page-Hinkley test~\cite{page_hinkley}. For each new data
+point, the distance to the nearest cluster is monitored to detect
+distributional changes. This approach triggers macro-clustering only when
+necessary and explicitly integrates the MONIC algorithm for cluster transition
+tracking.
 
 Lima and Sousa introduced CETra (Cluster Evolution Tracker)~\cite{cetra}, an
 online cluster tracking framework tailored for disjoint clusters that evolve

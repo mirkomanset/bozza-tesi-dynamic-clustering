@@ -42,6 +42,3 @@ latexmkrc
 *.ist
 *.nlo
 *.nls
-
-# Poli-images
-*.eps
