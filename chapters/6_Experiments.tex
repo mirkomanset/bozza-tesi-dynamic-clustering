@@ -1,21 +1,256 @@
 \chapter{Experiments}\label{ch:experiments}
 
-\section{Data pre-process}\label{sec:preprocess}
+\section{General Experimental Settings}\label{sec:general_settings}
+
+This section describes the general experimental settings and ablation studies
+used to evaluate the robustness and sensitivity of the proposed streaming
+clustering and tracking framework. These settings apply across all data
+modalities—tabular, image, and text—and guide the configuration for
+dataset-specific experiments presented in the following sections.
+
+\subsection{Confidence Level in Gaussian Mixture Modeling}
+
+In all experiments, the confidence parameter $\alpha$ in the Gaussian mixture
+model is set to $0.9$. While this value was not varied systematically, it
+aligns with standard practice and ensures a high degree of confidence in the
+compactness of each Gaussian cluster.
+
+\begin{itemize}
+    \item Lower values of $\alpha$ yield broader clusters, allowing more overlap and
+          increasing sensitivity to transitions.
+    \item Higher values of $\alpha$ create tighter, more isolated clusters, reducing
+          false positives in transition detection.
+\end{itemize}
+
+\subsection{Overlapping Threshold}
+
+To assess how overlap sensitivity affects transition detection, different
+values of $\tau$ were evaluated: $\tau \in \{0.25, 0.5, 0.75\}$.
+
+\begin{itemize}
+    \item $\tau = 0.5$ (default): Offers balanced detection of cluster
+          transitions and aligns with the design of the Effective Overlapping
+          Score.
+    \item $\tau = 0.25$: Increases overlap tolerance, enhancing sensitivity
+          but risking instability due to spurious transitions.
+    \item $\tau = 0.75$: Enforces stricter transition criteria, improving
+          precision at the cost of recall.
+\end{itemize}
+
+The threshold functions similarly to a decision boundary in classification
+tasks and should be selected based on the application’s tolerance for false
+positives and false negatives.
+
+\subsection{Streaming Clustering Time Window}
+
+The \texttt{time\_window} parameter controls how long microclusters are
+retained. Its value was adapted to the nature of each dataset, reflecting the
+expected drift rate and batch size.
+
+\begin{itemize}
+    \item An appropriately chosen \texttt{time\_window} leads to stable tracking results.
+    \item A small \texttt{time\_window} results in excessive deletion and re-creation of
+          clusters, disrupting continuity.
+    \item A large \texttt{time\_window} may preserve outdated clusters, impeding the
+          model’s responsiveness to rapid drift.
+\end{itemize}
+
+Representative samples from microclusters were used to inspect cluster
+evolution and support parameter tuning.
+
+\subsection{Macroclustering Triggering Strategy}
+
+Two approaches were explored:
+
+\begin{itemize}
+    \item \textbf{Fixed-interval triggering:} Macroclustering is applied regularly,
+          typically at each batch arrival.
+    \item \textbf{Adaptive triggering:} Macroclustering is invoked conditionally
+          based on statistical changes in the data.
+\end{itemize}
+
+\paragraph{Key Findings:}
+\begin{itemize}
+    \item Adaptive triggering reduces computational load without missing key transitions,
+          especially in stable datasets.
+    \item In high-dimensional or sparse data (e.g., topic streams), adaptive triggering
+          may underperform due to variability in clustering outcomes.
+\end{itemize}
+
+\noindent The choice of triggering strategy should be dataset-dependent,
+with fixed intervals preferred in volatile scenarios.
 
 \section{Tabular data}\label{sec:tabular_data}
 
-\subsection{Synthetic data}\label{subsec:sythetic_data}
+\subsection{Synthetic Data}\label{subsec:sythetic_data}
 
-\subsection{Bicycles data}\label{subsec:bicycles_data}
+To assess the behavior of the proposed framework under controlled
+non-stationary conditions, a synthetic dataset was generated. This dataset
+simulates dynamic changes in cluster structure over time.
+
+Each time step contains samples drawn from multivariate Gaussian distributions
+in $\mathbb{R}^8$. The entire sequence consists of $20$ time steps, each
+containing $100$ data points per active cluster. The generated stream evolves
+smoothly, with transitions driven by interpolation and directional movement in
+latent space.
+
+\paragraph{Cluster Definitions.} The synthetic stream includes the following conceptual clusters:
+
+\begin{itemize}
+    \item \textbf{Cluster $ c_A $} (Fixed cluster): Present at every time step.
+          This cluster remains stationary throughout the sequence, serving as a
+          temporal anchor.
+
+    \item \textbf{Clusters $ c_B $ and $ c_C $} (First merging pair): Initially
+          positioned apart, these clusters move toward a common centroid during steps 0--4
+          (merge phase), remain merged (identical means) during steps 5--9, and then split
+          back to separate locations during steps 10--14.
+
+    \item \textbf{Clusters $ c_D $ and $ c_E $} (Second merging pair): Unlike $ c_B $
+          and $ c_C $, these clusters stay merged from the beginning of the stream until
+          step 9. They then split into distinct clusters during steps 10--14 and gradually
+          re-merge in steps 15--19.
+
+    \item \textbf{Cluster $ c_F $} (Recurring cluster): Initially present in steps 0--4,
+          this cluster disappears completely in steps 5--9. It reappears at step 10 and
+          persists through step 14 before disappearing again in steps 15--19.
+
+    \item \textbf{Cluster $ c_G $} (Appearing cluster): This cluster appears for
+          the first time at step 15 and persists until the end of the stream (steps 15--19).
+\end{itemize}
+
+\paragraph{Labeling and Evaluation.} Each cluster is assigned a persistent label across all time steps, even during
+periods of absence. The synthetic design provides explicit ground-truth
+tracking information for evaluation. Additionally, random positive-definite
+covariance matrices are assigned to each Gaussian component.
+
+This synthetic dataset is designed to serve as a controlled benchmark for
+testing the temporal coherence, memory mechanisms, and adaptability of dynamic
+clustering algorithms under various non-stationary conditions.
 
 \section{Images data}\label{sec:images_data}
 
-\subsection{Brightness Drift}\label{subsec:contrast_drift}
+\subsection{Brightness drift in places data}\label{subsec:brightness}
+
+The dataset consists of images from the Places dataset, focusing on two
+classes: \emph{mountain} and \emph{beach}. A reference set of 500 images per
+class is selected. Then, for each of 5 batches, 100 images per class are
+sampled. In each batch, the brightness of the images is gradually increased
+using color jitter to simulate smooth and unidirectional visual drift.
+
+Each image is resized to \(224 \times 224\) pixels before being embedded using
+the CLIP model~\cite{clip} to extract high-level feature representations. CLIP
+(Contrastive Language-Image Pretraining) is a neural network model trained to
+connect images and natural language descriptions in a shared embedding space.
+It learns to encode images into feature vectors that capture semantic content
+by contrasting image-text pairs during training, enabling effective zero-shot
+classification and retrieval tasks.
+
+Subsequently, the high-dimensional CLIP embeddings are reduced to 32 dimensions
+using UMAP~\cite{umap} for computational efficiency and to facilitate
+clustering. UMAP (Uniform Manifold Approximation and Projection) is a nonlinear
+dimension reduction technique that preserves both local and global data
+structure by constructing a high-dimensional graph and optimizing a
+low-dimensional embedding to maintain the data’s manifold structure, allowing
+effective clustering and visualization.
+
+This experimental setup evaluates the robustness of dynamic clustering methods
+under smooth brightness drift affecting the global appearance of the input
+images.
 
 \subsection{Fruits}\label{subsec:fruits}
+
+A custom dataset consisting of 2420 RGB images of tangerines, each resized to
+$100 \times 100$ pixels, was used to investigate dynamic clustering under
+geometric and chromatic object variability. While the shape of the tangerines
+remains generally consistent, subtle variations in color—ranging from light
+orange to deep reddish hues—can influence the visual embedding and clustering
+behavior.
+
+To isolate the foreground objects and reduce background noise, automatic
+background segmentation was applied using the GrabCut algorithm~\cite{grabcut}.
+This technique leverages an iterative graph-cut procedure initialized with a
+fixed bounding box to distinguish foreground from background, resulting in
+4-channel RGBA images with transparent backgrounds.
+
+Following segmentation, each image was encoded using a pretrained ResNet-50
+convolutional neural network~\cite{resnet}, producing high-dimensional visual
+feature embeddings. These embeddings were subsequently reduced to 64 dimensions
+using UMAP~\cite{umap} to facilitate efficient clustering and visualization.
+This experimental setup supports the analysis of cluster evolution in a
+structured image dataset with visually similar objects exhibiting gradual
+variations in color and background context.
 
 \section{Text data}\label{sec:text_data}
 
 \subsection{Typographical drift}\label{subsec:typographical_drift}
+To evaluate the robustness of dynamic clustering under linguistic noise, a
+subset of the 20 Newsgroups dataset~\cite{20newsgroups} was used, consisting of
+four categories: \textit{rec.autos}, \textit{comp.graphics}, \textit{sci.med},
+and \textit{rec.sport.baseball}. These categories represent distinct topics,
+enabling clear cluster structure in the original space.
+
+The experimental stream was constructed in two phases. Initially, 100 clean
+documents per class were sampled to serve as a reference distribution.
+Subsequently, for each of three drift stages, 278 documents per class were
+sampled and subjected to varying levels of typographical corruption. The
+corruption was introduced using a synthetic noise function designed to simulate
+realistic typing errors through random character-level modifications, including
+insertions, deletions, replacements, and swaps. The severity of corruption was
+controlled by a parameter $\lambda \in \{0.1, 0.5, 0.9\}$, with higher values
+producing more aggressive drift. Errors were constrained by keyboard proximity
+rules to preserve plausibility.
+
+Each text sample was embedded into a 384-dimensional semantic vector using the
+\texttt{all\allowbreak-MiniLM\allowbreak-L6\allowbreak-v2}
+model~\cite{sentence-transformers}, a transformer-based sentence encoder
+optimized for efficient semantic representation. Dimensionality was
+subsequently reduced to 32 using UMAP~\cite{umap} to facilitate clustering and
+reduce computational overhead.
+
+This setup emulates a realistic scenario in which textual input quality
+degrades progressively while preserving underlying topical structure, offering
+a controlled testbed for evaluating the temporal adaptability of clustering
+algorithms.
 
 \subsection{Topics Evolution}\label{subsec:topics_evolution}
+
+To evaluate the behavior of dynamic clustering under topic distribution shifts,
+a subset of the 20Newsgroups dataset~\cite{20newsgroups} was used. Four topical
+categories were selected: \texttt{comp.graphics}, \texttt{rec.autos},
+\texttt{sci.med}, and \texttt{rec.sport.hockey}, corresponding respectively to
+labels $0$, $1$, $4$, and $3$. These topics represent distinct semantic areas
+and were chosen to ensure adequate inter-class diversity.
+
+Each document was embedded using the
+\texttt{all\allowbreak-MiniLM\allowbreak-L6\allowbreak-v2}
+model~\cite{sentence-transformers}, which produces compact and semantically
+meaningful vector representations of text. The resulting high-dimensional
+embeddings were then reduced to 16 dimensions using UMAP~\cite{umap} to enhance
+computational efficiency and preserve cluster structures in a low-dimensional
+space suitable for visualization and analysis.
+
+A reference set was formed by sampling a fixed number of documents per topic
+(e.g., 100 for \texttt{autos} and \texttt{med}, 50 for \texttt{graphics}).
+Then, across eight batches (B1 to B8), topic proportions were deliberately
+varied to simulate realistic distribution shifts over time. This batch plan
+introduces scenarios such as topic emergence, disappearance, and reappearance.
+For instance, \texttt{rec.sport.hockey} (label 3) is entirely absent from the
+reference and early batches but gradually increases in presence, peaking in
+batch B7. Conversely, \texttt{rec.autos} (label 1) is prominent in the early
+stages but vanishes completely in the last three batches.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lccccccccc}
+        \hline
+        \textbf{Topic (Label)} & Ref & B1  & B2  & B3  & B4  & B5  & B6  & B7  & B8  \\
+        \hline
+        \texttt{graphics (0)}  & 50  & 100 & 100 & 50  & 50  & 50  & 0   & 100 & 100 \\
+        \texttt{autos (1)}     & 100 & 100 & 100 & 100 & 50  & 50  & 0   & 0   & 0   \\
+        \texttt{med (4)}       & 100 & 50  & 0   & 0   & 50  & 50  & 100 & 100 & 50  \\
+        \texttt{hockey (3)}    & 0   & 0   & 50  & 100 & 100 & 100 & 150 & 50  & 100 \\
+        \hline
+    \end{tabular}
+    \caption{Batch-wise Sample Distribution (per topic)}
+\end{table}
