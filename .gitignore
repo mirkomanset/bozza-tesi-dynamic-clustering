@@ -42,3 +42,6 @@ latexmkrc
 *.ist
 *.nlo
 *.nls
+
+# my image
+/Images/my_images

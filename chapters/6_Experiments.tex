@@ -1,84 +1,12 @@
 \chapter{Experiments}\label{ch:experiments}
-
-\section{General Experimental Settings}\label{sec:general_settings}
-
-This section describes the general experimental settings and ablation studies
-used to evaluate the robustness and sensitivity of the proposed streaming
-clustering and tracking framework. These settings apply across all data
-modalities—tabular, image, and text—and guide the configuration for
-dataset-specific experiments presented in the following sections.
-
-\subsection{Confidence Level in Gaussian Mixture Modeling}
-
-In all experiments, the confidence parameter $\alpha$ in the Gaussian mixture
-model is set to $0.9$. While this value was not varied systematically, it
-aligns with standard practice and ensures a high degree of confidence in the
-compactness of each Gaussian cluster.
-
-\begin{itemize}
-    \item Lower values of $\alpha$ yield broader clusters, allowing more overlap and
-          increasing sensitivity to transitions.
-    \item Higher values of $\alpha$ create tighter, more isolated clusters, reducing
-          false positives in transition detection.
-\end{itemize}
-
-\subsection{Overlapping Threshold}
-
-To assess how overlap sensitivity affects transition detection, different
-values of $\tau$ were evaluated: $\tau \in \{0.25, 0.5, 0.75\}$.
-
-\begin{itemize}
-    \item $\tau = 0.5$ (default): Offers balanced detection of cluster
-          transitions and aligns with the design of the Effective Overlapping
-          Score.
-    \item $\tau = 0.25$: Increases overlap tolerance, enhancing sensitivity
-          but risking instability due to spurious transitions.
-    \item $\tau = 0.75$: Enforces stricter transition criteria, improving
-          precision at the cost of recall.
-\end{itemize}
-
-The threshold functions similarly to a decision boundary in classification
-tasks and should be selected based on the application’s tolerance for false
-positives and false negatives.
-
-\subsection{Streaming Clustering Time Window}
-
-The \texttt{time\_window} parameter controls how long microclusters are
-retained. Its value was adapted to the nature of each dataset, reflecting the
-expected drift rate and batch size.
-
-\begin{itemize}
-    \item An appropriately chosen \texttt{time\_window} leads to stable tracking results.
-    \item A small \texttt{time\_window} results in excessive deletion and re-creation of
-          clusters, disrupting continuity.
-    \item A large \texttt{time\_window} may preserve outdated clusters, impeding the
-          model’s responsiveness to rapid drift.
-\end{itemize}
-
-Representative samples from microclusters were used to inspect cluster
-evolution and support parameter tuning.
-
-\subsection{Macroclustering Triggering Strategy}
-
-Two approaches were explored:
-
-\begin{itemize}
-    \item \textbf{Fixed-interval triggering:} Macroclustering is applied regularly,
-          typically at each batch arrival.
-    \item \textbf{Adaptive triggering:} Macroclustering is invoked conditionally
-          based on statistical changes in the data.
-\end{itemize}
-
-\paragraph{Key Findings:}
-\begin{itemize}
-    \item Adaptive triggering reduces computational load without missing key transitions,
-          especially in stable datasets.
-    \item In high-dimensional or sparse data (e.g., topic streams), adaptive triggering
-          may underperform due to variability in clustering outcomes.
-\end{itemize}
-
-\noindent The choice of triggering strategy should be dataset-dependent,
-with fixed intervals preferred in volatile scenarios.
+This section provides detailed descriptions of each dataset used in the
+experiments, outlining their origins, key characteristics, and preprocessing
+procedures. The evaluation spans multiple data types including tabular, image,
+and text data to comprehensively assess the performance of the dynamic
+clustering algorithm across different modalities. For each dataset, the
+clustering results produced by the dynamic clustering algorithm are presented
+and analyzed, with particular emphasis on the interpretability and
+explainability of the outcomes.
 
 \section{Tabular data}\label{sec:tabular_data}
 
@@ -94,32 +22,32 @@ containing $100$ data points per active cluster. The generated stream evolves
 smoothly, with transitions driven by interpolation and directional movement in
 latent space.
 
-\paragraph{Cluster Definitions.} The synthetic stream includes the following conceptual clusters:
+The synthetic stream includes the following conceptual clusters:
 
 \begin{itemize}
-    \item \textbf{Cluster $ c_A $} (Fixed cluster): Present at every time step.
-          This cluster remains stationary throughout the sequence, serving as a
-          temporal anchor.
+      \item \textbf{Cluster $ c_A $} (Fixed cluster): Present at every time step.
+            This cluster remains stationary throughout the sequence, serving as a
+            temporal anchor.
 
-    \item \textbf{Clusters $ c_B $ and $ c_C $} (First merging pair): Initially
-          positioned apart, these clusters move toward a common centroid during steps 0--4
-          (merge phase), remain merged (identical means) during steps 5--9, and then split
-          back to separate locations during steps 10--14.
+      \item \textbf{Clusters $ c_B $ and $ c_C $} (First merging pair): Initially
+            positioned apart, these clusters move toward a common centroid during steps 0--4
+            (merge phase), remain merged (identical means) during steps 5--9, and then split
+            back to separate locations during steps 10--14.
 
-    \item \textbf{Clusters $ c_D $ and $ c_E $} (Second merging pair): Unlike $ c_B $
-          and $ c_C $, these clusters stay merged from the beginning of the stream until
-          step 9. They then split into distinct clusters during steps 10--14 and gradually
-          re-merge in steps 15--19.
+      \item \textbf{Clusters $ c_D $ and $ c_E $} (Second merging pair): Unlike $ c_B $
+            and $ c_C $, these clusters stay merged from the beginning of the stream until
+            step 9. They then split into distinct clusters during steps 10--14 and gradually
+            re-merge in steps 15--19.
 
-    \item \textbf{Cluster $ c_F $} (Recurring cluster): Initially present in steps 0--4,
-          this cluster disappears completely in steps 5--9. It reappears at step 10 and
-          persists through step 14 before disappearing again in steps 15--19.
+      \item \textbf{Cluster $ c_F $} (Recurring cluster): Initially present in steps 0--4,
+            this cluster disappears completely in steps 5--9. It reappears at step 10 and
+            persists through step 14 before disappearing again in steps 15--19.
 
-    \item \textbf{Cluster $ c_G $} (Appearing cluster): This cluster appears for
-          the first time at step 15 and persists until the end of the stream (steps 15--19).
+      \item \textbf{Cluster $ c_G $} (Appearing cluster): This cluster appears for
+            the first time at step 15 and persists until the end of the stream (steps 15--19).
 \end{itemize}
 
-\paragraph{Labeling and Evaluation.} Each cluster is assigned a persistent label across all time steps, even during
+Each cluster is assigned a persistent label across all time steps, even during
 periods of absence. The synthetic design provides explicit ground-truth
 tracking information for evaluation. Additionally, random positive-definite
 covariance matrices are assigned to each Gaussian component.
@@ -127,18 +55,67 @@ covariance matrices are assigned to each Gaussian component.
 This synthetic dataset is designed to serve as a controlled benchmark for
 testing the temporal coherence, memory mechanisms, and adaptability of dynamic
 clustering algorithms under various non-stationary conditions.
+\begin{figure}[h]
+      \centering
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/synthetic_data/best_setting/graph.png}
+      \caption{Graphical evolution of Synthtic Data Experiment}
+\end{figure}
+
+
+\subsection{KDD Cup 99}\label{subsec:kdd_data}
+The KDD Cup 1999 dataset~\cite{kdd99dataset} is a widely recognized benchmark
+for evaluating intrusion detection systems (IDS) and machine learning
+techniques in the cybersecurity domain. It was developed from network traffic
+data collected during the DARPA 1998 Intrusion Detection Evaluation Program.
+The dataset comprises millions of connection records, each labeled as either a
+normal connection or one of 22 different attack types. Each instance is
+represented by 41 features, which include both continuous numerical values and
+symbolic (categorical) attributes
+
+A widely used and more computationally manageable alternative to the full
+dataset is the \textbf{10\% subset}, which contains approximately 494,021
+records. This subset maintains the same feature structure and class
+distribution as the original dataset. In this study, the 10\% subset is
+employed to facilitate the application of dynamic clustering algorithms and to
+ensure tractable processing times in an evolving data stream scenario.
+
+To prepare the dataset for clustering, all categorical features were removed,
+resulting in a set of 32 continuous numerical features. Subsequently, a Min-Max
+normalization was applied to scale each feature into the range $[0,1]$,
+standardizing the feature space and mitigating the impact of differing value
+ranges on clustering algorithm.
+
+The KDD99 dataset has been extensively used in the literature to evaluate the
+performance of streaming and dynamic clustering algorithms in evolving
+environments. Notable examples include \textsc{CluStream}~\cite{clustream},
+\textsc{DenStream}~\cite{denstream}, \textsc{D-Stream}~\cite{d_stream}, and
+\textsc{Stream\-KM++}~\cite{stream_km_plus_plus}.
+
+In the context of dynamic clustering, each cluster can be interpreted as a
+group of network connections exhibiting similar behavioral patterns. These
+clusters may correspond to distinct categories of network activity such as:
+Normal traffic, Denial of Service DoS (e.g., \emph{smurf}, \emph{neptune}),
+User to Root U2R (e.g., \emph{buffer\_overflow}), Remote to Local R2L (e.g.,
+\emph{guess\_passwd}) or Probing (e.g., \emph{nmap}, \emph{satan}).
+
+\begin{figure}[h]
+      \centering
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/kdd_data/best_setting/graph.png}
+      \caption{Graphical evolution of KDD-CUP-99 Data Experiment}
+\end{figure}
 
 \section{Images data}\label{sec:images_data}
 
 \subsection{Brightness drift in places data}\label{subsec:brightness}
 
-The dataset consists of images from the Places dataset, focusing on two
-classes: \emph{mountain} and \emph{beach}. A reference set of 500 images per
-class is selected. Then, for each of 5 batches, 100 images per class are
-sampled. In each batch, the brightness of the images is gradually increased
-using color jitter to simulate smooth and unidirectional visual drift.
+The dataset consists of images from the Places dataset~\cite{placesdataset},
+focusing on two classes: \emph{mountain} and \emph{beach}. A reference set of
+500 images per class is selected. Then, for each of 5 batches, 100 images per
+class are sampled. In each batch, the brightness of the images is gradually
+increased using color jitter to simulate smooth and unidirectional visual
+drift.
 
-Each image is resized to \(224 \times 224\) pixels before being embedded using
+Each image is resized to $224 \times 224$ pixels before being embedded using
 the CLIP model~\cite{clip} to extract high-level feature representations. CLIP
 (Contrastive Language-Image Pretraining) is a neural network model trained to
 connect images and natural language descriptions in a shared embedding space.
@@ -151,21 +128,29 @@ using UMAP~\cite{umap} for computational efficiency and to facilitate
 clustering. UMAP (Uniform Manifold Approximation and Projection) is a nonlinear
 dimension reduction technique that preserves both local and global data
 structure by constructing a high-dimensional graph and optimizing a
-low-dimensional embedding to maintain the data’s manifold structure, allowing
+low-dimensional embedding to maintain the data's manifold structure, allowing
 effective clustering and visualization.
 
 This experimental setup evaluates the robustness of dynamic clustering methods
 under smooth brightness drift affecting the global appearance of the input
 images.
 
+\begin{figure}[h]
+      \centering
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/image_brightness/best_setting/graph.png}
+      \caption{Graphical evolution of Places-Brightness-Drift Experiment}
+\end{figure}
+
 \subsection{Fruits}\label{subsec:fruits}
 
-A custom dataset consisting of 2420 RGB images of tangerines, each resized to
-$100 \times 100$ pixels, was used to investigate dynamic clustering under
-geometric and chromatic object variability. While the shape of the tangerines
-remains generally consistent, subtle variations in color—ranging from light
-orange to deep reddish hues—can influence the visual embedding and clustering
-behavior.
+A collected dataset of 2,420 RGB images of tangerines, each resized to $100
+      \times 100$ pixels, was used to investigate dynamic clustering for images under
+real-world conditions. Initially, the dataset contains predominantly green to
+yellow tangerines, followed by the appearance of more orange and reddish
+specimens. In addition to this chromatic progression, slight variations in
+shape are also present. These gradual changes introduce distributional drift in
+the visual domain, making the dataset a representative real case study for
+evaluating the effectiveness of dynamic clustering methods.
 
 To isolate the foreground objects and reduce background noise, automatic
 background segmentation was applied using the GrabCut algorithm~\cite{grabcut}.
@@ -180,6 +165,12 @@ using UMAP~\cite{umap} to facilitate efficient clustering and visualization.
 This experimental setup supports the analysis of cluster evolution in a
 structured image dataset with visually similar objects exhibiting gradual
 variations in color and background context.
+
+\begin{figure}[h]
+      \centering
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/fruits/best_setting/graph.png}
+      \caption{Graphical evolution of Fruits Images Experiment}
+\end{figure}
 
 \section{Text data}\label{sec:text_data}
 
@@ -210,8 +201,14 @@ reduce computational overhead.
 
 This setup emulates a realistic scenario in which textual input quality
 degrades progressively while preserving underlying topical structure, offering
-a controlled testbed for evaluating the temporal adaptability of clustering
+a controlled test for evaluating the temporal adaptability of clustering
 algorithms.
+
+\begin{figure}[h]
+      \centering
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/text_typos/best_setting/graph.png}
+      \caption{Graphical evolution of Text Typos Experiment}
+\end{figure}
 
 \subsection{Topics Evolution}\label{subsec:topics_evolution}
 
@@ -233,24 +230,30 @@ space suitable for visualization and analysis.
 A reference set was formed by sampling a fixed number of documents per topic
 (e.g., 100 for \texttt{autos} and \texttt{med}, 50 for \texttt{graphics}).
 Then, across eight batches (B1 to B8), topic proportions were deliberately
-varied to simulate realistic distribution shifts over time. This batch plan
-introduces scenarios such as topic emergence, disappearance, and reappearance.
-For instance, \texttt{rec.sport.hockey} (label 3) is entirely absent from the
+varied to simulate distribution shifts over time. This batch plan introduces
+scenarios such as topic emergence, disappearance, and reappearance. For
+instance, \texttt{rec.sport.hockey} (label 3) is entirely absent from the
 reference and early batches but gradually increases in presence, peaking in
 batch B7. Conversely, \texttt{rec.autos} (label 1) is prominent in the early
 stages but vanishes completely in the last three batches.
 
 \begin{table}[H]
-    \centering
-    \begin{tabular}{lccccccccc}
-        \hline
-        \textbf{Topic (Label)} & Ref & B1  & B2  & B3  & B4  & B5  & B6  & B7  & B8  \\
-        \hline
-        \texttt{graphics (0)}  & 50  & 100 & 100 & 50  & 50  & 50  & 0   & 100 & 100 \\
-        \texttt{autos (1)}     & 100 & 100 & 100 & 100 & 50  & 50  & 0   & 0   & 0   \\
-        \texttt{med (4)}       & 100 & 50  & 0   & 0   & 50  & 50  & 100 & 100 & 50  \\
-        \texttt{hockey (3)}    & 0   & 0   & 50  & 100 & 100 & 100 & 150 & 50  & 100 \\
-        \hline
-    \end{tabular}
-    \caption{Batch-wise Sample Distribution (per topic)}
+      \centering
+      \begin{tabular}{lccccccccc}
+            \hline
+            \textbf{Topic (Label)} & Ref & B1  & B2  & B3  & B4  & B5  & B6  & B7  & B8  \\
+            \hline
+            \texttt{graphics (0)}  & 50  & 100 & 100 & 50  & 50  & 50  & 0   & 100 & 100 \\
+            \texttt{autos (1)}     & 100 & 100 & 100 & 100 & 50  & 50  & 0   & 0   & 0   \\
+            \texttt{med (4)}       & 100 & 50  & 0   & 0   & 50  & 50  & 100 & 100 & 50  \\
+            \texttt{hockey (3)}    & 0   & 0   & 50  & 100 & 100 & 100 & 150 & 50  & 100 \\
+            \hline
+      \end{tabular}
+      \caption{Batch-wise Sample Distribution (per topic)}
 \end{table}
+
+\begin{figure}[h]
+      \centering
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/text_topics/best_setting/graph.png}
+      \caption{Graphical evolution of Text Topics Evolution Experiment}
+\end{figure}

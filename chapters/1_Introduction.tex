@@ -20,14 +20,13 @@ far-reaching is data nonstationarity—the phenomenon where the statistical
 properties of data distributions evolve over time.
 
 Most generalized machine learning algorithms operate under the implicit
-assumption that data are independent and identically distributed (i.i.d.) and
-drawn from a stationary distribution. However, this assumption rarely holds in
-real-world applications. In practice, data distributions often shift or evolve
-over time—a phenomenon known as \emph{drift}. If left unaddressed, drift can
-significantly degrade a model's performance. Such drift can arise from various
-factors, including gradual changes in user behavior, shifts in regulatory or
-economic conditions, sensor degradation, software updates, or large-scale
-events like global pandemics.
+assumption that data are independent and identically distributed (i.i.d.).
+However, this assumption rarely holds in real-world applications. In practice,
+data distributions often shift or evolve over time, a phenomenon known as
+\emph{drift}. If left unaddressed, drift can significantly degrade a model's
+performance. Such drift can arise from various factors, including gradual
+changes in user behavior, shifts in regulatory or economic conditions, sensor
+degradation, software updates, or large-scale events like global pandemics.
 
 To address these challenges, the Machine Learning Operations
 (MLOps)~\cite{mlops} paradigm has emerged as a comprehensive approach that
@@ -72,8 +71,8 @@ addressed in this thesis, namely the Streaming Clustering Problem and the
 Cluster Tracking Problem, highlighting the challenges they pose in dynamic
 environments.
 
-Chapter~\ref{ch:background} offers a comprehensive review of current methods in
-Streaming Clustering and Cluster Tracking techniques highlighting their
+Chapter~\ref{ch:preliminaries} offers a comprehensive review of current methods
+in Streaming Clustering and Cluster Tracking techniques highlighting their
 strengths and limits.
 
 Chapter~\ref{ch:method} introduces the proposed methodology, specifically

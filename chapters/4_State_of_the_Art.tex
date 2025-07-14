@@ -105,8 +105,8 @@ using a variant of the Clustering Feature (CF) vector:
 
 where:
 \begin{itemize}
-    \item $\vec{LS} = \sum_{i=1}^{n} \vec{x}_i$ is the linear sum of $n$ $d$-dimensional data points,
-    \item $\vec{SS} = \sum_{i=1}^{n} \vec{x}_i \cdot \vec{x}_i$ is the sum of squares,
+    \item $\vec{LS} = \sum_{i=1}^{n} \mathbf{x}_i$ is the linear sum of $n$ $d$-dimensional data points,
+    \item $\vec{SS} = \sum_{i=1}^{n} \mathbf{x}_i \circ \mathbf{x}_i$ is the sum of squares,
     \item $\vec{TS} = \sum_{i=1}^{n} t_i$ is the sum of timestamps,
     \item $n$ is the number of points contained in the micro-cluster.
 \end{itemize}
@@ -115,7 +115,7 @@ From these quantities, the following statistics can be derived:
 \begin{itemize}
     \item \textbf{Centroid}:
           \begin{equation}
-              \vec{\mu} = \frac{\vec{LS}}{n}
+              \mu = \frac{\vec{LS}}{n}
           \end{equation}
     \item \textbf{Standard Deviation}:
           \begin{equation}
@@ -125,20 +125,53 @@ From these quantities, the following statistics can be derived:
 
 Incoming data points are assigned to the nearest micro-cluster if the distance
 to its centroid is below a threshold, often proportional to the cluster's
-standard deviation. If the point does not fit within any existing
-micro-cluster, a new one is created. To maintain a fixed budget of
-micro-clusters (denoted by $q$), the algorithm either merges the two closest
-micro-clusters or removes the least recently updated one.
+standard deviation. Once a point $\mathbf{x}$ with timestamp $t$ is assigned to
+a micro-cluster $MC_j$, its internal statistics are updated as follows:
+
+\begin{equation}
+    \label{eq:clustream_insert}
+    \begin{cases}
+        \vec{LS}_j & \leftarrow \vec{LS}_j + \mathbf{x}                  \\
+        \vec{SS}_j & \leftarrow \vec{SS}_j + \mathbf{x} \circ \mathbf{x} \\
+        \vec{TS}_j & \leftarrow \vec{TS}_j + t                           \\
+        n_j        & \leftarrow n_j + 1
+    \end{cases}
+\end{equation}
+
+If the point does not fit within any existing micro-cluster, a new one is
+created using its statistics. Specifically, given a data point $ \mathbf{x} $
+with timestamp $ t $, the new micro-cluster is initialized as:
+
+\begin{equation}
+    \label{eq:clustream_create}
+    \begin{cases}
+        \vec{LS} & = \mathbf{x}                  \\
+        \vec{SS} & = \mathbf{x} \circ \mathbf{x} \\
+        \vec{TS} & = t                           \\
+        n        & = 1
+    \end{cases}
+\end{equation}
+
+Since the micro-cluster contains only one point, no variance or standard
+deviation can be computed yet. In practice, a default threshold is often used
+for such singleton clusters.
+
+To maintain a fixed number of micro-clusters (denoted by $q$), the algorithm
+first attempts to remove any micro-cluster that has not been updated within the
+time window. If no such outdated micro-cluster exists, it then merges the two
+closest micro-clusters.
 
 When two micro-clusters $MC_1$ and $MC_2$ are merged, the resulting
 micro-cluster is defined as:
-
-\begin{align}
-    \vec{LS}^{\text{new}} & = \vec{LS}^{(1)} + \vec{LS}^{(2)} \\
-    \vec{SS}^{\text{new}} & = \vec{SS}^{(1)} + \vec{SS}^{(2)} \\
-    \vec{TS}^{\text{new}} & = \vec{TS}^{(1)} + \vec{TS}^{(2)} \\
-    n^{\text{new}}        & = n^{(1)} + n^{(2)}
-\end{align}
+\begin{equation}
+    \label{eq:clustream_merge}
+    \begin{cases}
+        \vec{LS}^{\text{new}} & = \vec{LS}^{(1)} + \vec{LS}^{(2)} \\
+        \vec{SS}^{\text{new}} & = \vec{SS}^{(1)} + \vec{SS}^{(2)} \\
+        \vec{TS}^{\text{new}} & = \vec{TS}^{(1)} + \vec{TS}^{(2)} \\
+        n^{\text{new}}        & = n^{(1)} + n^{(2)}
+    \end{cases}
+\end{equation}
 
 \paragraph{Pyramidal Time Frame} To support temporal analysis, CluStream maintains snapshots of the current set
 of micro-clusters at multiple temporal granularities. Snapshots are stored at
@@ -155,6 +188,8 @@ clustering over a condensed, noise-reduced representation of the data stream.
 
 This modular architecture enables CluStream to efficiently handle high-speed
 data streams while supporting accurate and scalable offline analysis.
+
+\input{algorithms/clustream_online.tex}
 
 \section{Tracking Clusters Algorithms}\label{sec:tracking_clusters_algorithms}
 
@@ -196,24 +231,39 @@ to their grid-constrained topology.
 on tracking structural transitions through direct comparison of clustering results at
 successive time points.
 
-\textsc{MONIC} (Spiliopoulou et al.~\cite{monic}) is a seminal heuristic framework that uses an overlap
-matrix $O_{ij}$ between clusters $X_i$ at $t$ and $Y_j$ at $\tau > t$.
-The overlap matrix is defined as:
+\textsc{MONIC} (Spiliopoulou et al.~\cite{monic}) is a seminal heuristic framework for monitoring cluster transitions over time. Given two clusterings at different time points, clusters $ X_i $ at time $ t $ and clusters $ Y_j $ at a later time $ \tau > t $, the method uses an \emph{overlap matrix} $ O $ to quantify the fraction of points shared between clusters:
+
 \begin{equation}
-    O_{ij} = \frac{|X_i \cap Y_j|}{|X_i|}, \quad i = 1, \ldots, k_1, \quad j = 1, \ldots, k_2.
+    O_{ij} = \frac{|X_i \cap Y_j|}{|X_i|}, \quad i = 1, \ldots, k_t, \quad j = 1, \ldots, k_{\tau},
 \end{equation}
 
-Transitions are categorized as:
+where $ k_t $ and $ k_{\tau} $ are the numbers of clusters at times $ t $ and $
+    \tau $, respectively. To decide whether clusters correspond across time, a
+threshold $ \theta \in [0,1] $ is used: overlaps above $ \theta $ are
+considered significant.
+
+Using this threshold, cluster transitions are categorized as follows:
+
 \begin{itemize}
-    \item Appearance: $\nexists X_i: O_{ij} > \theta$
+    \item \textbf{Appearance}: Cluster $ Y_j $ at time $ \tau $ has no significant overlap with any cluster $ X_i $ at time $ t $, i.e.,
+          \[
+              \nexists i: O_{ij} > \theta.
+          \]
 
-    \item Disappearance: $\nexists Y_j: O_{ij} > \theta$
+    \item \textbf{Disappearance}: Cluster $ X_i $ at time $ t $ has no significant overlap with any cluster $ Y_j $ at time $ \tau $, i.e.,
+          \[
+              \nexists j: O_{ij} > \theta.
+          \]
 
-    \item Merge/Split: Multiple significant overlaps across time
+    \item \textbf{Merge/Split}: Multiple significant overlaps indicate that one cluster splits into several or several clusters merge, i.e., multiple $ O_{ij} > \theta $ for fixed $ i $ or $ j $.
 
-    \item Survival: One-to-one high overlap
+    \item \textbf{Survival}: A cluster persists over time with a one-to-one high overlap, i.e., there exists a unique $ (i,j) $ such that
+          \[
+              O_{ij} > \theta,
+          \]
+          and this correspondence is exclusive.
 
-    \item Internal Transition: Changes in size or centroid within a surviving cluster
+    \item \textbf{Internal Transition}: The cluster survives but undergoes changes in its size or centroid position between $ t $ and $ \tau $.
 \end{itemize}
 
 This directly aligns with the transition framework from
@@ -235,6 +285,11 @@ definitions. MONIC+ supports three distinct types of clusters based on how they 
           like hierarchical clustering fall under this category. The data-dependent
           nature of the metric space means that adding a new point can affect cluster
           boundaries indirectly.
+
+          Here, the function $\text{age}(a, t_j)$ measures the relevance of the data
+          point $a$ at time $t_j$, typically reflecting how recent or important the point
+          is (e.g., an exponentially decaying weight based on timestamp). Using this, the
+          overlap is defined as:
           \begin{equation}
               \text{overlap}(X,Y) = \frac{\sum_{a \in X \cap Y} \text{age}(a, t_j)}{\sum_{a \in X} \text{age}(a, t_j)}
           \end{equation}
@@ -255,9 +310,15 @@ definitions. MONIC+ supports three distinct types of clusters based on how they 
 bipartite graph weighted by conditional probabilities between clusters over time.
 This probabilistic approach refines the detection of transitions and facilitates intuitive
 visualization of merges and splits.
+
+Let $ \mathbf{z} $ denote a data point such that $ \mathbf{z} \in C_m(t_i) $ at
+time $ t_i $. The weight of an edge from cluster $ C_m $ at time $ t_i $ to
+cluster $ C_u $ at time $ t_j > t_i $ is given by the conditional probability
+that the same point $ \mathbf{z} $ belongs to $ C_u(t_j) $ at time $ t_j $,
+given it belonged to $ C_m(t_i) $ at time $ t_i $:
 \begin{equation}
-    \text{weight}(C_u, C_m) = P(X \in C_u(t_j) \mid X \in C_m(t_i)) =
-    \frac{\sum_{m=1}^p P(X \in C_m(t_i) \cap C_u(t_j))}{\sum_{m=1}^p P(X \in C_m(t_i))}
+    \text{weight}(C_u, C_m) = P(\mathbf{z} \in C_u(t_j) \mid \mathbf{z} \in C_m(t_i)) =
+    \frac{P(\mathbf{z} \in C_m(t_i) \cap C_u(t_j))}{P(\mathbf{z} \in C_m(t_i))}.
 \end{equation}
 
 \textsc{MEC} (Oliveira and Gama~\cite{mec}) introduces an alternative bipartite-graph-based visualization
@@ -265,26 +326,28 @@ tool, emphasizing structural comparison of clusters at static intervals. It uses
 probability edges to identify transitions similar to MONIC, reinforcing the notion of transition
 tracking via inter-temporal matching.
 
-\textbf{Evolutionary Clustering} foundamental concept is to balance temporal smoothness
+\textbf{Evolutionary Clustering}'s fundamental concept is to balance temporal smoothness
 with clustering accuracy at each time point. Chakrabarti et al.~\cite{evolutionary_clustering}
 introduced the evolutionary clustering framework, in which the objective is to compute clustering
-solutions $C_t$ for each time step $t$ that are both representative of the current data snapshot
-and consistent with past clusterings. The trade-off is formalized as:
+solutions $ C^t $ for each time step $ t $ that are both representative of the current data snapshot
+and consistent with past clusterings. Let $ D^t $ denote the dataset observed at time $ t $.
+The trade-off is formalized as:
 \begin{equation}
-    \sum_{t=1}^T sq(C_t, M_t) - cp \sum_{t=2}^T hc(C_{t-1}, C_t)
+    \sum_{t=1}^T sq(C^t, D^t) - cp \sum_{t=2}^T hc(C^{t-1}, C^t)
 \end{equation}
 
-Here, $sq$ represents snapshot quality, $hc$ denotes history cost, and $cp$ is
-a change penalty. Transitions such as \textit{survival} and \textit{small
-    structural shifts} are naturally captured through low history cost values,
-while abrupt transitions (e.g., \textit{split}, \textit{merge}, or
-\textit{appearance}) incur higher costs unless strongly justified by the
-snapshot quality.
+Here, $ sq $ represents snapshot quality measuring how well clustering $ C^t $
+fits the data $ D^t $, $ hc $ denotes the history cost measuring changes
+between consecutive clusterings, and $ cp $ is a change penalty. Transitions
+such as \textit{survival} and \textit{small structural shifts} are naturally
+captured through low history cost values, while abrupt transitions (e.g.,
+\textit{split}, \textit{merge}, or \textit{appearance}) incur higher costs
+unless strongly justified by the snapshot quality.
 
 Chi et al.~\cite{spectral_evolutionary_clustering} extended this approach via
 evolutionary spectral clustering, optimizing a cost of the form:
 \begin{equation}
-    C_{total} = \alpha C_{temporal} + (1-\alpha)C_{snapshot}
+    J_{total} = \alpha J_{temporal} + (1-\alpha)J_{snapshot}
 \end{equation}
 
 Zhang et al.~\cite{density_evolutionary_clustering} adapted the framework for
@@ -317,33 +380,36 @@ Macro-clustering is performed over fixed-size windows. Their model explicitly
 considers external transitions such as \textit{survival}, \textit{absorption},
 and \textit{split}:
 
+Let $ C^t $ and $ C^\tau $ denote the sets of macro-clusters obtained from two
+consecutive fixed-size time windows $ t $ and $ \tau $, respectively.
+
 \begin{itemize}
-    \item \textbf{Survival:} A cluster $X \in C_i$ is said to have survived as $Y \in C_j$ if:
+    \item \textbf{Survival:} A cluster $ X \in C^t $ is said to have survived as $ Y \in C^\tau $ if:
           \begin{enumerate}
-              \item The distance between the centroids of $X$ and $Y$ is less than the radius of
-                    $X$.
-              \item The ratio of the radii of $Y$ and $X$ lies between 0.75 and 1.25.
+              \item The distance between the centroids of $ X $ and $ Y $ is less than the radius
+                    of $ X $.
+              \item The ratio of the radii of $ Y $ and $ X $ lies between 0.75 and 1.25.
           \end{enumerate}
 
-    \item \textbf{Absorption:} A cluster $X \in C_i$ is said to be absorbed by $Y \in C_j$ if:
+    \item \textbf{Absorption:} A cluster $ X \in C^t $ is said to be absorbed by $ Y \in C^\tau $ if:
           \begin{enumerate}
-              \item The distance between the centroids of $X$ and $Y$ is less than the radius of
-                    $Y$.
-              \item The radius of $X$ is less than the distance between their centroids.
+              \item The distance between the centroids of $ X $ and $ Y $ is less than the radius
+                    of $ Y $.
+              \item The radius of $ X $ is less than the distance between their centroids.
           \end{enumerate}
 
-    \item \textbf{Split:} A cluster $X \in C_i$ is said to split into clusters $Y_1, Y_2, \dots$ in $C_j$ if:
+    \item \textbf{Split:} A cluster $ X \in C^t $ is said to split into clusters $ Y_1, Y_2, \dots $ in $ C^\tau $ if:
           \begin{enumerate}
-              \item The centroids of $Y_1, Y_2, \dots$ fall within the radius of $X$.
-              \item Their radii are smaller than the radius of $X$.
-              \item The ratio of the total number of points in $Y_1, Y_2, \dots$ to the number of
-                    points in $X$ is between 0.6 and 1.
+              \item The centroids of $ Y_1, Y_2, \dots $ fall within the radius of $ X $.
+              \item Their radii are smaller than the radius of $ X $.
+              \item The ratio of the total number of points in $ Y_1, Y_2, \dots $ to the number of
+                    points in $ X $ is between 0.6 and 1.
           \end{enumerate}
 \end{itemize}
 
 Clusters that do not fall into any of these categories are classified as
-\textbf{disappeared} (in $C_j$) or \textbf{emerged} (in $C_j$ but not derived
-from $C_i$).
+\textbf{disappeared} (in $ C^\tau $) or \textbf{emerged} (in $ C^\tau $ but not
+derived from $ C^t $).
 
 In a subsequent work, Namitha et al.~\cite{namitha_dynamic_clustering_2}
 proposed replacing the fixed-size window approach with a drift detection
@@ -356,8 +422,8 @@ tracking.
 Lima and Sousa introduced CETra (Cluster Evolution Tracker)~\cite{cetra}, an
 online cluster tracking framework tailored for disjoint clusters that evolve
 gradually. CETra maintains a \textit{referential clustering}
-$\zeta_{\text{ref}}^{t_i}$ in memory, used as a basis for comparison with
-successive \textit{evolutionary clusterings} $\zeta^{t_j}$:
+$C_{\text{ref}}^t$ in memory, used as a basis for comparison with
+successive \textit{evolutionary clusterings} $C^{\tau}$:
 
 \begin{itemize}
     \item A clustering remains referential until a significant divergence from subsequent

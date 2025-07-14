@@ -1,0 +1,30 @@
+% ---- Algorithm: Online Micro-Clustering (Self-Contained) ----
+\begin{algorithm}[h]
+    \caption{Online Micro-Clustering in CluStream}
+    \label{alg:clustream}
+    \begin{algorithmic}[1]
+        \REQUIRE Incoming data point $\mathbf{x}$ with timestamp $t$, micro-clusters $\mathcal{MC}$, max clusters $q$, time window $\Delta$
+        \ENSURE Updated micro-cluster set $\mathcal{MC}$
+
+        \STATE Find nearest micro-cluster $MC_j \in \mathcal{MC}$ with centroid $\mu_j$
+        \IF{$\text{dist}(\mathbf{x}, \mu_j) < \text{threshold}(MC_j)$}
+        \STATE Assign $\mathbf{x}$ to $MC_j$ using~\ref{eq:clustream_insert}
+        \ELSE
+        \STATE Create new micro-cluster $MC_{new}$ for $\mathbf{x}$ using~\ref{eq:clustream_create}
+        \IF{$|\mathcal{MC}| < q$}
+        \STATE Add $MC_{new}$ to $\mathcal{MC}$
+        
+        \ELSE
+        \STATE Identify outdated $MC_{\text{old}}$ with last update $< t - \Delta$
+        \IF{$MC_{\text{old}}$ exists}
+        \STATE Replace $MC_{\text{old}}$ with $MC_{new}$
+        \ELSE
+        \STATE Find two closest micro-clusters $MC_1$, $MC_2$
+        \STATE Merge $MC_1$ and $MC_2$ into $MC_{\text{merged}}$ using~\ref{eq:clustream_merge}
+        \STATE Replace $MC_1$ with $MC_{new}$
+        \STATE Replace $MC_2$ with $MC_{merged}$
+        \ENDIF
+        \ENDIF
+        \ENDIF
+    \end{algorithmic}
+\end{algorithm}

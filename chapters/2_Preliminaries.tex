@@ -12,18 +12,19 @@ independent and identically distributed (i.i.d.) tuples $\{(\mathbf{x_i},
 $P(\mathbf{x},y)$.
 
 The main goal of supervised learning is to approximate the underlying
-input-output relation by inducing a function $h(\mathbf{x})$, that generalizes
-and can make predictions for new unseen data.
+input-output relation by means of a function $h \in \mathcal{H}$ with
+$\mathcal{H}$ being the hypothesis space and such that $h: \mathcal{X}
+    \rightarrow \mathcal{Y}$.
 
 Formally given a learning model $\mathcal{L} = (\mathcal{H},\ell)$ which
 includes a hypothesis space $\mathcal{H}$ and a loss function $\ell: \mathbb{R}
     \times \mathbb{R} \rightarrow \mathbb{R}$, the \textit{expected risk} of a
-hypothesis $h \in H$ is defined as
+hypothesis $h \in \mathcal{H}$ is defined as
 \begin{equation}
     R_P(h) = \mathbb{E}_P[\ell(h(\mathbf{x}),y)] = \int_{\mathcal{X}} \int_{\mathcal{Y}}
     \ell(h(\mathbf{x}),y)P(\mathbf{x},y)dyd\mathbf{x}
 \end{equation}
-where $\mathbb{E}_P$ denotes the expectation with respect to the joint
+where $\mathbb{E}_P$ denotes the expectation with respect to the joint distribution.
 The objective is to find the hypothesis $h^* \in \mathcal{H}$ that minimizes
 the expected risk:
 \begin{equation}
@@ -31,15 +32,18 @@ the expected risk:
 \end{equation}
 However, since the distribution $P(\mathbf{x},y)$ is typically unknown, the
 expected risk cannot be computed directly. Instead, an empirical version is
-used, based on a finite set of training samples. The \textit{empirical risk} is
-computed as:
+used, based on a finite set of training samples $\mathcal{D}: = \{ \{ (x_i, y_i) \} \}_{i=1}^N$.
+The \textit{empirical risk} is computed as:
 \begin{equation}
-    \hat{R}_p(h) = {\frac{1}{N}} \sum^N_{i=1} \ell(h(\mathbf{x_i}),y_i)
+    \hat{R}_p(h, D) = {\frac{1}{N}} \sum^N_{i=1} \ell(h(\mathbf{x_i}),y_i)
 \end{equation}
+where samples $\{ (x_i, y_i) \} \in D$.
+
 This leads to the principle of \textit{empirical risk minimization}, where the
-goal is to find the hypothesis $\hat{h}$ that minimizes the empirical risk:
+goal is to find the hypothesis $\hat{h}$ that minimizes the empirical risk
+conditioned on the dataset $D$:
 \begin{equation}
-    \hat{h} = \underset{h \in \mathcal{H}}{\arg\min} \hat{R}_P(h)
+    \hat{h} = \underset{h \in \mathcal{H}}{\arg\min} \hat{R}_P(h, D)
 \end{equation}
 
 \section{Unsupervised Learning}\label{sec:unsupervised_learning}
@@ -63,19 +67,19 @@ unique objective function. Instead, each task introduces its own criteria:
           intra-cluster similarity is maximized while inter-cluster similarity is
           minimized;
     \item In dimensionality reduction, methods seek low-dimensional embeddings that
-          preserve specific properties of the data, such as variance (PCA) or
-          neighborhood structure (t-SNE, UMAP);
+          preserve specific properties of the data, such as variance (PCA~\cite{pca}) or
+          neighborhood structure (t-SNE~\cite{tsne}, UMAP~\cite{umap});
     \item In density estimation, the goal is to estimate the data-generating distribution
           $P(\mathbf{x})$ itself.
 \end{itemize}
 
-Formally, many unsupervised learning problems can be cast as a general
-optimization problem of the form:
+Formally, given a dataset $D: (x_i)_{i=1}^N$ many unsupervised learning
+problems can be cast as a general optimization problem of the form:
 \begin{equation}
-    \hat{h} = \underset{f \in \mathcal{F}}{\arg\min} \mathcal{L}(f; \mathbf{x_1,\ldots,x_N}),
+    \hat{f} = \underset{f \in \mathcal{F}}{\arg\min} \mathcal{L}(f, D),
 \end{equation}
 where $\mathcal{F}$ is the space of candidate functions or models, and
-$\mathcal{L}$ is a task-specific loss function that quantifies the quality of
+$\mathcal{L}: \mathcal{F} \times \mathcal{D} \rightarrow \mathbb{R}$ is a task-specific loss function that quantifies the quality of
 the learned structure (e.g., reconstruction error, likelihood, clustering
 objective). Unlike in supervised learning, $\mathcal{L}$ does not directly
 compare predictions to ground truth targets, but instead measures
@@ -91,13 +95,13 @@ compressing data, detecting outliers, and analyzing patterns in
 high-dimensional datasets. Formally, let
 
 \begin{equation}
-    \mathcal{D} = \{\mathbf{x}_1, \mathbf{x}_2, \ldots, \mathbf{x}_N\} \subset \mathbb{R}^d,
+    \mathcal{D} = \{\mathbf{x}_1, \mathbf{x}_2, \ldots, \mathbf{x}_N\},
 \end{equation}
-where each $\mathbf{x}_i$ is a data point sampled from an unknown distribution
+where each $\mathbf{x}_i \in \mathbb{R}^d$ is a data point sampled from an unknown distribution
 $P(\mathbf{x})$. The clustering task involves assigning each point a label $c_i
-    \in \{1, \ldots, K\}$, where $K$ is either predefined, estimated automatically
+    \in \{1, \ldots, K\}$, where $K \in \mathbb{N}$ is either predefined,
 or selected via model selection techniques.
-A clustering $\mathcal{C} = \{C_1, C_2, \ldots, C_K\}$
+A clustering $C = \{C_1, C_2, \ldots, C_K\}$
 must satisfy the following conditions:
 \begin{equation}
     \begin{cases}
@@ -112,9 +116,9 @@ representing intra-cluster similarity or inter-cluster separation. The optimal
 clustering is obtained by minimizing this objective over all admissible
 partitions:
 \begin{equation}
-    \hat{\mathcal{C}} = \underset{\mathcal{C} \in \mathbf{S}}{\arg\min} \, \mathcal{L}(\mathcal{C}; \mathcal{D}),
+    \hat{C} = \underset{C \in \mathcal{C}}{\arg\min} \, \mathcal{L}(C; \mathcal{D}),
 \end{equation}
-where $\mathbf{S}$ denotes the space of valid partitions of $\mathcal{D}$.
+where $\mathcal{C}$ denotes the space of valid partitions of $\mathcal{D}$.
 
 \subsection{Clustering Algorithms}
 A wide range of clustering algorithms has been developed, each based on
@@ -136,13 +140,14 @@ following sections.
 \subsection*{K-means Clustering}
 K-means~\cite{k_means} is a partition-based clustering algorithm that divides a
 dataset into $k$ non-overlapping clusters by minimizing the within-cluster sum
-of squared distances. Given a dataset $\mathcal{X} = \{x_1, x_2, \ldots, x_n\}$
-with $x_i \in \mathbb{R}^d$, K-means aims to find a set of $k$ centroids
-$\{\mu_1, \mu_2, \ldots, \mu_k\}$ that minimize the following objective
-function:
+of squared distances. Given a dataset $\mathcal{X} = \{\mathbf{x}_1,
+    \mathbf{x}_2, \ldots, \mathbf{x}_N\}$ with $\mathbf{x}_i \in \mathbb{R}^d$,
+K-means aims to find a set of $k$ centroids $\mu = \{\boldsymbol{\mu}_1,
+    \boldsymbol{\mu}_2, \ldots, \boldsymbol{\mu}_k\}$ that minimize the following
+objective function:
 
 \begin{equation}
-    J = \sum_{i=1}^{n} \sum_{j=1}^{k} r_{ij} \| x_i - \mu_j \|^2
+    J(\mathcal{X}, \mu) = \sum_{i=1}^{n} \sum_{j=1}^{k} r_{ij} \| \mathbf{x}_i - \boldsymbol{\mu}_j \|^2
 \end{equation}
 
 where:
@@ -157,7 +162,7 @@ The algorithm proceeds iteratively via two steps:
           \begin{equation}
               r_{ij} =
               \begin{cases}
-                  1 & \text{if } j = \arg \min_{l} \|x_i - \mu_l\|^2 \\
+                  1 & \text{if } j = \arg \min_{l \in \{1, \ldots, k\}} \|x_i - \mu_l\|^2 \\
                   0 & \text{otherwise}
               \end{cases}
           \end{equation}
@@ -170,54 +175,63 @@ The algorithm proceeds iteratively via two steps:
 This process continues until convergence, typically when assignments no longer
 change or the objective function stabilizes.
 
-Once the final clusters are obtained, each cluster $j$ can be summarized using
-its centroid $\mu_j$ and a corresponding radius that quantifies the cluster’s
-spread. The radius is typically defined as the maximum or average Euclidean
-distance between the centroid and the points assigned to that cluster.
+Once the final clusters are obtained, each cluster $C_{j}$ can be summarized
+using its centroid $\mu_j$ and a corresponding radius that quantifies the
+cluster's spread. The radius is typically defined as the maximum or average
+Euclidean distance between the centroid and the points assigned to that
+cluster.
+
+K-means is effective when clusters are compact, spherical, and of similar size,
+and when the number of clusters $k$ is known in advance. It performs well on
+large, low-noise datasets where Euclidean distance is a meaningful similarity
+metric. However, it may struggle with clusters of varying densities or
+non-convex shapes.
 
 \subsection*{Gaussian Mixture Models (GMM)}
 
 GMM~\cite{gaussian_mixtures} is a distribution-based clustering method that
 models data as a mixture of $k$ Gaussian distributions. Each component
 (cluster) is represented by a multivariate Gaussian with its own mean and
-covariance.
+covariance which together define the shape, size, and orientation of the
+cluster in the feature space.
 
 The probability density function for a GMM is given by:
 
 \begin{equation}
-    p(x_i) = \sum_{j=1}^{k} \pi_j \mathcal{N}(x_i \mid \mu_j, \Sigma_j)
+    p(\mathbf{x}_i) = \sum_{j=1}^{k} \pi_j \mathcal{N}(\mathbf{x}_i \mid \boldsymbol{\mu}_j, \mathbf{\mathbf{\Sigma}}_j)
 \end{equation}
 
 where:
 \begin{itemize}
     \item $\pi_j$ is the mixing coefficient for cluster $j$, with $\sum_{j=1}^{k} \pi_j = 1$
-    \item $\mathcal{N}(x_i \mid \mu_j, \Sigma_j)$ is the multivariate Gaussian density:
+    \item $\mathcal{N}(\mathbf{x}_i \mid \boldsymbol{\mu}_j, \mathbf{\mathbf{\Sigma}_j})$ is the multivariate Gaussian density with mean $\boldsymbol{\mu}_j$ and covariance matrix $\mathbf{\Sigma}_j \in \mathbb{R}^{d \times d}$:
           \begin{equation}
-              \mathcal{N}(x \mid \mu, \Sigma) = \frac{1}{(2\pi)^{d/2} |\Sigma|^{1/2}}
-              \exp \left( -\frac{1}{2}(x - \mu)^\top \Sigma^{-1} (x - \mu) \right)
+              \mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}, \mathbf{\Sigma}) = \frac{1}{(2\pi)^{d/2} |\mathbf{\Sigma}|^{1/2}}
+              \exp \left( -\frac{1}{2}(\mathbf{x} - \boldsymbol{\mu})^\top \mathbf{\Sigma}^{-1} (\mathbf{x} - \boldsymbol{\mu}) \right)
           \end{equation}
 \end{itemize}
 
-The parameters $\{\pi_j, \mu_j, \Sigma_j\}_{j=1}^k$ are estimated using the
-Expectation-Maximization (EM) algorithm:
+The parameters $\{\pi_j, \boldsymbol{\mu}_j, \mathbf{\Sigma}_j\}_{j=1}^k$ are
+estimated using the Expectation-Maximization (EM)
+algorithm~\cite{em_algorithm}:
 
 \begin{enumerate}
     \item \textbf{E-step:} Compute the posterior probabilities for each point:
           \begin{equation}
-              \gamma_{ij} = \frac{\pi_j \mathcal{N}(x_i \mid \mu_j, \Sigma_j)}
-              {\sum_{l=1}^{k} \pi_l \mathcal{N}(x_i \mid \mu_l, \Sigma_l)}
+              \gamma_{ij} = \frac{\pi_j \mathcal{N}(\mathbf{x}_i \mid \boldsymbol{\mu}_j, \mathbf{\Sigma}_j)}
+              {\sum_{l=1}^{k} \pi_l \mathcal{N}(\mathbf{x}_i \mid \boldsymbol{\mu}_l, \mathbf{\Sigma}_l)}
           \end{equation}
 
     \item \textbf{M-step:} Update parameters based on current posterior probabilities:
           \begin{align}
-              \pi_j^{\text{new}}    & = \frac{1}{n} \sum_{i=1}^{n} \gamma_{ij}                            \\
-              \mu_j^{\text{new}}    & = \frac{\sum_{i=1}^{n} \gamma_{ij} x_i}{\sum_{i=1}^{n} \gamma_{ij}} \\
-              \Sigma_j^{\text{new}} & = \frac{\sum_{i=1}^{n} \gamma_{ij}(x_i - \mu_j)(x_i - \mu_j)^\top}
+              \pi_j^{\text{new}}              & = \frac{1}{n} \sum_{i=1}^{n} \gamma_{ij}                                                                       \\
+              \boldsymbol{\mu}_j^{\text{new}} & = \frac{\sum_{i=1}^{n} \gamma_{ij} \mathbf{x}_i}{\sum_{i=1}^{n} \gamma_{ij}}                                   \\
+              \mathbf{\Sigma}_j^{\text{new}}  & = \frac{\sum_{i=1}^{n} \gamma_{ij}(\mathbf{x}_i - \boldsymbol{\mu}_j)(\mathbf{x}_i - \boldsymbol{\mu}_j)^\top}
               {\sum_{i=1}^{n} \gamma_{ij}}
           \end{align}
 \end{enumerate}
 
-The EM algorithm iterates until the log-likelihood converges. Unlike K-means,
+The EM algorithm iterates until the log-likelihood stabilizes. Unlike K-means,
 GMM provides soft cluster assignments by computing the posterior probability of
 each data point belonging to each cluster. The final hard cluster assignment
 for a data point can be obtained by selecting the component with the highest
@@ -230,10 +244,6 @@ posterior probability:
 where $\gamma_{ij}$ denotes the posterior probability of component $j$ for data
 point $x_i$.
 
-Each Gaussian component in a GMM is naturally described by its mean vector
-$\mu_j$ and covariance matrix $\Sigma_j$, which together define the shape,
-size, and orientation of the cluster in the feature space.
-
 \subsection{Clustering Evaluation Metrics}
 
 Clustering evaluation metrics are broadly classified into \textbf{internal} and
@@ -242,38 +252,50 @@ using only the input data and the clustering result, without reference to any
 external information. External metrics, on the other hand, require ground truth
 labels to compare the clustering against known class memberships.
 
-\textbf{Silhouette Coefficient:} This metric measures how similar a data point is to
-its own cluster compared to other clusters. For a data point $i$, the silhouette score
-is defined as:
+\paragraph{Silhouette Coefficient:} This metric measures how similar a data point is to its own cluster compared to
+other clusters. For a data point $i$, the silhouette score is defined as:
 \begin{equation}
-    s(i) = \frac{b(i) - a(i)}{\max\{a(i), b(i)\}},
+    s(\mathbf{x}_i) = \frac{b(\mathbf{x}_i) - a(\mathbf{x}_i)}{\max\{a(\mathbf{x}_i), b(\mathbf{x}_i)\}},
 \end{equation}
-where $a(i)$ is the average distance from $i$ to all other points in its
-cluster, and $b(i)$ is the smallest average distance from $i$ to points in a
+where $a(\mathbf{x}_i)$ is the average distance from $\mathbf{x}_i$ to all other points in its
+cluster, and $b(\mathbf{x}_i)$ is the smallest average distance from $\mathbf{x}_i$ to points in a
 different cluster. The coefficient ranges from $-1$ to $1$, where values close
 to $1$ indicate well-clustered points.
 
-\textbf{Davies-Bouldin Index (DBI):} This metric evaluates the average similarity between each
-cluster and its most similar cluster, defined as the sum of the within-cluster distances divided
-by the between-cluster centroid distances. Formally:
+\paragraph{Davies-Bouldin Index (DBI):} This metric evaluates the average similarity between each cluster and its most
+similar cluster, defined as the sum of the within-cluster distances divided by
+the between-cluster centroid distances. Formally:
 \begin{equation}
-    \text{DBI} = \frac{1}{K} \sum_{i=1}^{K} \max_{j \ne i} \left( \frac{\sigma_i + \sigma_j}{d_{ij}} \right),
+    \text{DBI} = \frac{1}{k} \sum_{i=1}^{k} \max_{j \ne i} \left( \frac{\mathbf{\Sigma}_i + \mathbf{\Sigma}_j}{d_{ij}} \right),
 \end{equation}
-where $\sigma_i$ is the average distance of points in cluster $i$ to its
+where $\mathbf{\Sigma}_i$ is the average distance of points in cluster $i$ to its
 centroid, and $d_{ij}$ is the distance between the centroids of clusters $i$
 and $j$. Lower values of DBI indicate better clustering.
 
-\textbf{Adjusted Rand Index (ARI):} The ARI compares the similarity between the predicted clusters
-and the ground truth labels, correcting for chance groupings:
+\paragraph{Adjusted Rand Index (ARI):} The ARI compares the similarity between the predicted clusters and the ground
+truth labels, correcting for chance groupings.
+
+The \emph{Rand Index (RI)} measures the proportion of point pairs whose
+clustering assignments are consistent between the predicted and true labels.
+Formally, it is defined as:
+\begin{equation}
+    \text{RI} = \frac{a + b}{\binom{n}{2}},
+\end{equation}
+where:
+\begin{itemize}
+    \item $a$ is the number of pairs of points that are in the same cluster in both the predicted and true clusterings,
+    \item $b$ is the number of pairs of points that are in different clusters in both the predicted and true clusterings,
+    \item $\binom{n}{2}$ is the total number of unique pairs among $n$ data points.
+\end{itemize}
+
+The Adjusted Rand Index is then computed as:
 \begin{equation}
     \text{ARI} = \frac{\text{RI} - \mathbb{E}[\text{RI}]}{\max(\text{RI}) - \mathbb{E}[\text{RI}]},
 \end{equation}
-where $\text{RI}$ is the Rand Index and $\mathbb{E}[\text{RI}]$ is its expected
-value under random assignments. ARI values range from $-1$ to $1$, with $1$
-indicating perfect agreement.
+where $\mathbb{E}[\text{RI}]$ is the expected value of the Rand Index under random assignments. ARI values range from $-1$ to $1$, with $1$ indicating perfect agreement.
 
-\textbf{Normalized Mutual Information (NMI):} NMI measures the amount of shared information
-between the clustering assignments and the ground truth labels:
+\paragraph{Normalized Mutual Information (NMI):} NMI measures the amount of shared information between the clustering
+assignments and the ground truth labels:
 \begin{equation}
     \text{NMI}(U, V) = \frac{2 \cdot I(U; V)}{H(U) + H(V)},
 \end{equation}
@@ -283,8 +305,12 @@ particularly useful when the number of clusters differs from the number of
 classes.
 
 Each metric provides a different perspective on clustering quality. Internal
-metrics are essential when no labels are available, while external metrics
-offer direct validation against known structure in labeled datasets.
+metrics, such as the Silhouette score and the Davies-Bouldin Index (DBI),
+evaluate the cohesion and separation of clusters based solely on the input
+data, making them essential when no ground truth labels are available. In
+contrast, external metrics like the Adjusted Rand Index (ARI) and Normalized
+Mutual Information (NMI) compare the predicted clustering with known labels,
+offering direct validation when labeled data is present.
 
 \section{Stream Learning}\label{sec:stream_learning}
 In many real-world applications, data is not available as a static, finite
@@ -295,13 +321,13 @@ environments. Unlike traditional batch learning methods, stream learning
 algorithms are capable of processing data points individually or in small
 batches, often in a single pass, and updating their models incrementally.
 
-Formally, let $\{\mathbf{x_1, x_2,\ldots} \} $ be a potentially infinite
-sequence of data points drawn from a stream. The stream learning algorithm
-maintains a model $\mathcal{M}_t$ at each time step $t$ which is updated upon
-receiving a new data point $\mathbf{x}_t$. The update is performed using a
-function $U$ such that:
+Formally, let $\{\mathbf{x}_1, \mathbf{x}_2,\ldots \} $ be a potentially
+infinite sequence of data points drawn from a stream. The stream learning
+algorithm maintains a model $\mathcal{M}_t$ at each time step $t$ which is
+updated upon receiving a new data point $\mathbf{x}_t$. The update is performed
+using a function $U$ such that:
 \begin{equation}
-    \mathcal{M}_{t+1} = U(\mathcal{M}_t, \mathbf{x_t})
+    \mathcal{M}_{t+1} = U(\mathcal{M}_t, \mathbf{x}_t)
 \end{equation}
 This formulation enables the model to adapt continuously over time while
 operating within bounded memory and computational constraints, as required
@@ -323,11 +349,12 @@ ethical or legal standards~\cite{importance_of_explainabilty}.
 Some models are inherently interpretable such as decision trees, linear
 regression, and logistic regression where the influence of each feature is
 explicitly encoded in the model's structure or coefficients. For example, in
-linear models, the prediction for an instance $x \in \mathbb{R}^d$ is given by:
+linear models, the prediction for an instance $\mathbf{x} \in \mathbb{R}^d$ is
+given by:
 \begin{equation}
-    \hat{y} = w^\top x + b,
+    \hat{y} = w^\top \mathbf{x} + \mathbf{b},
 \end{equation}
-where each coefficient $w_i$ directly indicates the contribution of feature
+where each coefficient $\mathbf{w}_i \in \mathbb{R}^d$ directly indicates the contribution of feature
 $x_i$ to the prediction.
 
 However, many high-performing models such as deep neural networks (DNNs),
@@ -349,7 +376,7 @@ contribution of each input feature to the model's overall performance:
               \sum_{t \in T} \sum_{s \in \text{Splits}(t, f_i)} \Delta \text{Impurity}(s),
           \end{equation}
           where $T$ is the set of trees in the ensemble, and $s$ are the split points
-          involving feature $f_i$.
+          involving feature $f_i$ with $i \in \{ 1, \ldots, d\}$.
 
     \item In \textbf{permutation importance}, the values of feature $f_i$ are randomly
           permuted to break the association with the target, and the drop in performance
@@ -357,7 +384,8 @@ contribution of each input feature to the model's overall performance:
           \begin{equation} \text{Importance}_{\text{perm}}(f_i) =
               \mathcal{M}(\mathcal{D}) - \mathcal{M}(\mathcal{D}_{\pi_i}),
           \end{equation}
-          where $\mathcal{M}(\cdot)$ is the model evaluation metric and
+          where $\mathcal{M}(\cdot)$ is the model evaluation metric, $\pi_i$ represents a
+          permutation for feature $f_i$ and
           $\mathcal{D}_{\pi_i}$ denotes the dataset with feature $f_i$ permuted.
 \end{itemize}
 
@@ -366,13 +394,12 @@ the decision boundary around a specific input:
 
 \begin{itemize}
     \item \textbf{LIME} (Local Interpretable Model-agnostic Explanations)~\cite{lime} fits a
-          simple surrogate model (usually linear) around the neighborhood of the instance $x$ by
-          minimizing a weighted loss:
+          simple surrogate model (usually linear) around the neighborhood of the instance $\mathbf{x}$. It does so by generating a set of perturbed samples $\mathcal{Z}$ around $\mathbf{x}$ and minimizing a locality-weighted loss:
           \begin{equation}
-              \mathcal{L}(f, g, \pi_x) = \sum_{z \in \mathcal{Z}} \pi_x(z) (f(z) - g(z))^2 + \Omega(g),
+              \mathcal{L}(f, g, \pi_x) = \sum_{\mathbf{z} \in \mathcal{Z}} \pi_x(z) (f(\mathbf{z}) - g(\mathbf{z}))^2 + \Omega(g),
           \end{equation}
-          where $f$ is the original model, $g$ is the interpretable surrogate, $\pi_x(z)$
-          is a locality-aware kernel, and $\Omega(g)$ penalizes model complexity.
+          where $f$ is the original model, $g$ is the interpretable surrogate, $\pi_x(\mathbf{z})$
+          is a locality-aware kernel that assigns higher weight to points closer to $\mathbf{x}$, and $\Omega(g)$ penalizes the complexity of the surrogate model.
 
     \item \textbf{SHAP} (SHapley Additive exPlanations)~\cite{shap} assigns each feature an
           additive contribution to the prediction based on Shapley values from cooperative game theory:
@@ -445,7 +472,7 @@ drift are commonly distinguished:
 \end{enumerate}
 
 From a model maintenance perspective, only changes in the posterior
-distribution $p(y \mid X)$—as seen in real concept drift—have a direct impact
+distribution $p(y \mid X)$, as seen in real concept drift, have a direct impact
 on the predictive function and thus necessitate adaptation or retraining. In
 contrast, virtual drift, while potentially affecting performance indirectly,
 does not alter the relationship between inputs and outputs and may not always
@@ -582,38 +609,42 @@ There are several techniques for explaining drift, each aiming to reveal how
 data shifts influence model behavior. One common approach involves identifying
 which features have changed significantly over time and assessing how these
 changes impact the model's predictions. For example, feature importance
-analysis can be used to compare a model $f_{\text{ref}}$ trained on reference
-data $S_P \sim P^n$ with a model $f_{\text{prod}}$ trained on production data
-$S_Q \sim Q^m$. Let $\phi_i^{\text{ref}}$ and $\phi_i^{\text{prod}}$ denote the
-importance of feature $i$ in the respective models. A large shift
+analysis can be used to compare a model \( f_{\text{ref}} \) trained on
+reference data \( D_P = \{(\mathbf{x}_i, y_i)\}_{i=1}^n \sim P^n \), where \( P
+\) is the reference data distribution and \( n \) is the number of reference
+samples, with a model \( f_{\text{prod}} \) trained on production data \( D_Q =
+\{(\mathbf{x}_j, y_j)\}_{j=1}^m \sim Q^m \), where \( Q \) is the production
+data distribution and \( m \) is the number of production samples. Let \(
+\phi_i^{\text{ref}} \) and \( \phi_i^{\text{prod}} \) denote the importance of
+feature \( i \) in the respective models. A large shift
 \begin{equation}
     \Delta \phi_i = \left| \phi_i^{\text{ref}} - \phi_i^{\text{prod}} \right|
 \end{equation}
-may indicate that feature $i$ has changed its predictive relationship with the target.
-We refer to this method as \emph{feature importance for drift explainability}.
+may indicate that feature \( i \) has changed its predictive relationship with the target. We refer to this method as
+\emph{feature importance for drift explainability}.
 
-Another powerful approach to drift explainability frames the detection of
+Another powerful approach to drift explainability formulates the detection of
 distributional shift as a binary classification problem between the reference
-dataset $S_P$ and the production dataset
-$S_Q$~\cite{revisiting_two_sample_classifier}. This method—known as a
-\emph{Classifier Two-Sample Test} (C2ST)—labels samples from $P$ with class 0
+dataset $D_P$ and the production dataset
+$D_Q$~\cite{revisiting_two_sample_classifier}. This method, known as a
+\emph{Classifier Two-Sample Test} (C2ST), labels samples from $P$ with class 0
 and samples from $Q$ with class 1, and trains a binary classifier $f:
     \mathcal{X} \rightarrow \{0, 1\}$ to distinguish between them.
 
 If the null hypothesis $H_0: P = Q$ holds, then the classification accuracy of
-$f$ on a held-out validation set $S_{\text{test}}$ should remain close to
+$f$ on a held-out validation set $D_{\text{test}}$ should remain close to
 chance level, i.e., $\text{Acc}(f) \approx 0.5$. The test statistic is given
 by:
 \begin{equation}
-    \text{C2ST}(f) = \frac{1}{|S_{\text{test}}|} \sum_{(x, y) \in S_{\text{test}}} \mathbb{1}\{f(x) = y\}.
+    \text{C2ST}(f) = \frac{1}{|D_{\text{test}}|} \sum_{(\mathbf{x}, y) \in D_{\text{test}}} \mathbb{1} \{f(\mathbf{x}) = y\}.
 \end{equation}
 A significant deviation from $0.5$ suggests that $P \neq Q$, indicating distributional drift.
 
 Beyond detection, C2STs offer an interpretable means to explain drift by
 examining the feature importances of the trained classifier. This technique,
 referred to as \emph{concept feature importance for drift explainability},
-highlights which features $x_i$ contribute most to $f(x)$, and hence to the
-difference between $P$ and $Q$.
+highlights which features $\mathbf{x}_i$ contribute most to $f(\mathbf{x})$,
+and hence to the difference between $P$ and $Q$.
 
 Understanding the factors behind drift is essential for effective model
 management. Without explainability, decisions about retraining may be based on

@@ -4,9 +4,9 @@
 A \textit{data stream} is a potentially infinite sequence of multi-dimensional
 data points:
 \begin{equation}
-    \chi = \{x^t\}_{t=1}^{\infty}, \quad x^t \in \mathbb{R}^n
+    \mathcal{X} = \{\mathbf{x}^t\}_{t=1}^{\infty}
 \end{equation}
-where $x^t$ denotes the $n$-dimensional observation received at timestamp $t$.
+where $\mathbf{x}^t \in \mathbb{R}^n$ denotes the $d$-dimensional observation received at timestamp $t$.
 Due to the unbounded nature of data streams and limited memory or computation
 constraints, traditional batch clustering methods are not applicable in this
 setting.
@@ -16,13 +16,13 @@ groups in a timely and resource-efficient manner. At any given time $t$, a
 clustering algorithm processes the stream incrementally and produces a
 clustering result:
 \begin{equation}
-    C^t = \{c_1^t, c_2^t, \dots, c_{k^t}^t\}
+    C^t = \{C_1^t, C_2^t, \dots, C_{k^t}^t\}
 \end{equation}
 where:
 \begin{itemize}
     \item $C^t$ denotes the clustering obtained at time $t$,
     \item $k^t$ is the number of clusters at time $t$,
-    \item $c_i^t$ is the $i$-th cluster at time $t$, defined as a subset of data
+    \item $C_i^t$ is the $i$-th cluster at time $t$, defined as a subset of data
           points observed up to time $t$.
 \end{itemize}
 
@@ -55,7 +55,7 @@ $C^t$ at time $t$ may differ substantially from $C^\tau$ at a later time $\tau
 individual clusters change across time.
 
 Given a sequence of clustering models $\{C^0, C^1, \dots, C^T\}$ over time,
-where each $C^t = \{c_1^t, \dots, c_{k_t}^t\}$ represents a set of clusters at
+where each $C^t = \{C_1^t, \dots, C_{k_t}^t\}$ represents a set of clusters at
 time $t$, the goal is to identify and categorize transitions between clusters
 over time.
 
@@ -72,11 +72,11 @@ of transitions:
 
 To formally define cluster transitions, it is necessary to introduce the notion
 of \textbf{overlap} between clusters at different timestamps. Given a cluster $
-    c_i^t \in C^t $ and a cluster $ c_j^\tau \in C^\tau $, with $ t < \tau $, these
+    C_i^t \in C^t $ and a cluster $ C_j^\tau \in C^\tau $, with $ t < \tau $, these
 clusters are said to \emph{overlap}, denoted as
 
 \begin{equation}
-    c_i^t \circledast c_j^\tau,
+    C_i^t \circledast C_j^\tau,
 \end{equation}
 
 if they exhibit a non-negligible intersection, as determined by the underlying
@@ -86,16 +86,16 @@ chosen cluster model. Common examples include:
 \begin{itemize}
     \item \textbf{Enumeration-based Representation:}
           \begin{equation}
-              c_i^t \circledast c_j^\tau \iff \exists x \in \mathbb{R}^n \text{ such that } x \in c_i^t \land x \in c_j^\tau,
+              C_i^t \circledast C_j^\tau \iff \exists \mathbf{x} \in \mathbb{R}^n \text{ such that } \mathbf{x} \in C_i^t \land x \in C_j^\tau,
           \end{equation}
           indicating that the two clusters share at least one common data point.
 
     \item \textbf{Spherical Model Representation:}
           \begin{equation}
-              c_i^t \circledast c_j^\tau \iff d(\vec{\mu}_i^t, \vec{\mu}_j^\tau) \leq r_i^t + r_j^\tau,
+              C_i^t \circledast C_j^\tau \iff d(\mu_i^t, \mu_j^\tau) \leq r_i^t + r_j^\tau,
           \end{equation}
-          where $ \vec{\mu}_i^t $ and $ \vec{\mu}_j^\tau $ denote the centroids of
-          clusters $ c_i^t $ and $ c_j^\tau $, respectively, $ r_i^t $ and $ r_j^\tau $
+          where $ \mu_i^t $ and $ \mu_j^\tau $ denote the centroids of
+          clusters $ C_i^t $ and $ C_j^\tau $, respectively, $ r_i^t $ and $ r_j^\tau $
           are their radii, and $ d(\cdot, \cdot) $ is the Euclidean distance.
 \end{itemize}
 
@@ -104,23 +104,23 @@ transitions based on the concept of overlap:
 
 \begin{table}[H]
     \centering
-    {\small
+    {\scriptsize
         \begin{tabular}{|l|c|p{9cm}|}
             \hline
             \textbf{Transition} & \textbf{Notation}                                 & \textbf{Formal Definition}                                                                            \\
             \hline
-            Appearance          & $\emptyset \rightarrow c_j^\tau$                  &
-            $\nexists c_i^t \in C^t: c_i^t \circledast c_j^{\tau}$                                                                                                                          \\
+            Appearance          & $\emptyset \rightarrow C_j^\tau$                  &
+            $\nexists C_i^t \in C^t: C_i^t \circledast C_j^{\tau}$                                                                                                                          \\
             \hline
-            Disappearance       & $c_i^t \rightarrow \emptyset$                     & $\nexists c_j^{\tau} \in C^{\tau}: c_i^t \circledast c_j^{\tau}$                                      \\
+            Disappearance       & $C_i^t \rightarrow \emptyset$                     & $\nexists C_j^{\tau} \in C^{\tau}: C_i^t \circledast C_j^{\tau}$                                      \\
             \hline
-            Split               & $c_i^t \rightarrow \{c_1^\tau, \dots, c_v^\tau\}$ & $\exists\, 1 \leq j \leq v: c_i^t \circledast c_j^\tau \land \dots \land c_i^t \circledast c_v^\tau $ \\
+            Split               & $C_i^t \rightarrow \{C_1^\tau, \dots, C_v^\tau\}$ & $\exists\, 1 \leq j \leq v: C_i^t \circledast C_j^\tau \land \dots \land C_i^t \circledast C_v^\tau $ \\
             \hline
-            Merge               & $\{c_1^t, \dots, c_u^t\} \rightarrow c_j^\tau$    & $\exists\, 1 \leq i \leq u: c_i^t \circledast c_j^\tau \land \dots \land c_u^t \circledast c_j^\tau $ \\
+            Merge               & $\{C_1^t, \dots, C_u^t\} \rightarrow C_j^\tau$    & $\exists\, 1 \leq i \leq u: C_i^t \circledast C_j^\tau \land \dots \land C_u^t \circledast C_j^\tau $ \\
             \hline
-            Survival            & $c_i^t \rightarrow c_j^\tau$                      & $c_i^t \circledast c_j^\tau \land
-                \nexists\, c_u^t \in C^t \setminus \{c_i^t\}: c_u^t \circledast c_j^\tau \land
-            \nexists\, c_v^\tau \in C^\tau \setminus \{c_j^\tau\}: c_i^t \circledast c_v^\tau$                                                                                              \\
+            Survival            & $C_i^t \rightarrow C_j^\tau$                      & $C_i^t \circledast C_j^\tau \land
+                \nexists\, C_u^t \in C^t \setminus \{C_i^t\}: C_u^t \circledast C_j^\tau \land
+            \nexists\, C_v^\tau \in C^\tau \setminus \{C_j^\tau\}: C_i^t \circledast C_v^\tau$                                                                                              \\
             \hline
         \end{tabular}
     }
