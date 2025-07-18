@@ -1,20 +1,38 @@
 \chapter{Experiments}\label{ch:experiments}
-This section provides detailed descriptions of each dataset used in the
+This chapter provides detailed descriptions of each dataset used in the
 experiments, outlining their origins, key characteristics, and preprocessing
 procedures. The evaluation spans multiple data types including tabular, image,
 and text data to comprehensively assess the performance of the dynamic
-clustering algorithm across different modalities. For each dataset, the
-clustering results produced by the dynamic clustering algorithm are presented
-and analyzed, with particular emphasis on the interpretability and
-explainability of the outcomes.
+clustering algorithm across different modalities. For each dataset, the results
+produced by the dynamic clustering algorithm are presented and analyzed, with
+particular emphasis on the interpretability and explainability of the outcomes.
 
-\section{Tabular data}\label{sec:tabular_data}
+The following symbols are used throughout the experimental sections to denote
+key hyperparameters of the dynamic clustering algorithm: $q$ represents the
+maximum number of micro-clusters, $\Delta$ denotes the window size of the
+streaming clustering algorithm, and $I$ stands for the macro-clustering
+triggering interval. The parameter $\varepsilon = 0.5$, that denotes the
+ovelapping threshold, is chosen based on the definition of the Effective
+Overlapping Score, while the confidence level $\alpha = 0.9$, that dentoes the
+confidence used to compute the RMSize, is fixed to balance cluster compactness
+and flexibility. Both $\varepsilon$ and $\alpha$ remain constant across all
+experiments.
 
-\subsection{Synthetic Data}\label{subsec:sythetic_data}
+An extensive study on the impact of these hyperparameters on the algorithm's
+performance is provided in the Appendix~\ref{sec:hyperparameter_analysis}.
 
-To assess the behavior of the proposed framework under controlled
+The experimental sections are organized according to the nature and source of
+the data: synthetic data generated under controlled conditions, data with
+explicitly induced drift and real-world datasets. This structure facilitates a
+systematic analysis of the algorithm's behavior under varying levels of
+complexity and realism.
+
+\section{Synthetic Data}\label{sec:sythetic_data}
+
+To evaluate the behavior of the proposed framework under controlled
 non-stationary conditions, a synthetic dataset was generated. This dataset
-simulates dynamic changes in cluster structure over time.
+simulates dynamic changes in cluster structures over time and is designed to
+illustrate each type of possible transition.
 
 Each time step contains samples drawn from multivariate Gaussian distributions
 in $\mathbb{R}^8$. The entire sequence consists of $20$ time steps, each
@@ -25,25 +43,25 @@ latent space.
 The synthetic stream includes the following conceptual clusters:
 
 \begin{itemize}
-      \item \textbf{Cluster $ c_A $} (Fixed cluster): Present at every time step.
+      \item \textbf{Cluster $ C_A $} (Fixed cluster): Present at every time step.
             This cluster remains stationary throughout the sequence, serving as a
             temporal anchor.
 
-      \item \textbf{Clusters $ c_B $ and $ c_C $} (First merging pair): Initially
+      \item \textbf{Clusters $ C_B $ and $ C_C $} (First merging pair): Initially
             positioned apart, these clusters move toward a common centroid during steps 0--4
             (merge phase), remain merged (identical means) during steps 5--9, and then split
             back to separate locations during steps 10--14.
 
-      \item \textbf{Clusters $ c_D $ and $ c_E $} (Second merging pair): Unlike $ c_B $
-            and $ c_C $, these clusters stay merged from the beginning of the stream until
+      \item \textbf{Clusters $ C_D $ and $ C_E $} (Second merging pair): Unlike $ C_B $
+            and $ C_C $, these clusters stay merged from the beginning of the stream until
             step 9. They then split into distinct clusters during steps 10--14 and gradually
             re-merge in steps 15--19.
 
-      \item \textbf{Cluster $ c_F $} (Recurring cluster): Initially present in steps 0--4,
+      \item \textbf{Cluster $ C_F $} (Recurring cluster): Initially present in steps 0--4,
             this cluster disappears completely in steps 5--9. It reappears at step 10 and
             persists through step 14 before disappearing again in steps 15--19.
 
-      \item \textbf{Cluster $ c_G $} (Appearing cluster): This cluster appears for
+      \item \textbf{Cluster $ C_G $} (Appearing cluster): This cluster appears for
             the first time at step 15 and persists until the end of the stream (steps 15--19).
 \end{itemize}
 
@@ -52,15 +70,217 @@ periods of absence. The synthetic design provides explicit ground-truth
 tracking information for evaluation. Additionally, random positive-definite
 covariance matrices are assigned to each Gaussian component.
 
-This synthetic dataset is designed to serve as a controlled benchmark for
-testing the temporal coherence, memory mechanisms, and adaptability of dynamic
-clustering algorithms under various non-stationary conditions.
-\begin{figure}[h]
+\begin{figure}[H]
       \centering
-      \includegraphics[width=1\textwidth]{my_images/experiment_results/synthetic_data/best_setting/graph.png}
-      \caption{Graphical evolution of Synthtic Data Experiment}
+      \includegraphics[width=0.5\textwidth]{my_images/experiment_results/synthetic_data/data_evolution.png}
+      \caption{Synthetic Data in 2D PCA evolution.}
 \end{figure}
 
+This synthetic dataset is designed as a controlled benchmark to evaluate
+whether dynamic clustering algorithms can accurately capture all possible
+cluster transitions under various non-stationary conditions, testing their
+adaptability to evolving data.
+
+The hyperparameters chosen for this experimental setup are as follows: $q =
+      200$, $\Delta = 300$ and $I=150$.
+
+\begin{figure}[H]
+      \centering
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/synthetic_data/best_setting/graph.png}
+      \caption{Graphical evolution of Synthtic Data Experiment.}
+\end{figure}
+
+By analyzing the cluster flow, which visualizes the temporal evolution of each
+cluster, it is evident that in this controlled synthetic scenario, most of the
+induced transitions are detected accurately by the proposed framework. Notably,
+complex behaviors such as reappearance, re-merging, and re-splitting are
+effectively captured, demonstrating the method's strong performance under these
+conditions.
+
+Nonetheless, it is important to recognize that real-world data may present
+additional challenges not fully represented here. Therefore, while the results
+indicate promising capabilities within this synthetic setting, further
+evaluation is necessary to fully assess the method's robustness and
+generalizability to more complex and noisy environments.
+
+\section{Induced Drift data}\label{sec:induced_drift_data}
+
+This section presents experiments on datasets derived from originally
+stationary sources, where artificial drift is systematically introduced to
+simulate non-stationary environments. These constructed scenarios enable
+controlled evaluation of the dynamic clustering algorithm's ability to respond
+to gradual changes in data distribution.
+
+The experimental setup includes one image dataset in which brightness is
+progressively altered to induce visual drift, and one text dataset where
+typographical noise is incrementally applied to simulate degradation. While the
+transformations differ in modality and implementation, they serve a common
+purpose: to create interpretable drift patterns for assessing clustering
+behavior under evolving conditions. Detailed analyses of each case are provided
+in the corresponding subsections.
+
+\subsection{Brightness drift in places data}\label{subsec:brightness}
+
+The dataset consists of images from the Places dataset~\cite{placesdataset},
+focusing on two classes: \emph{mountain} and \emph{beach}. A reference set of
+500 images per class is selected. Then, for each of 5 batches, 100 images per
+class are sampled. In each batch, the brightness of the images is gradually
+increased using color jitter to simulate smooth and unidirectional visual
+drift.
+
+Each image is resized to $224 \times 224$ pixels before being embedded using
+the CLIP model~\cite{clip} to extract high-level feature representations. CLIP
+(Contrastive Language-Image Pretraining) is a neural network model trained to
+connect images and natural language descriptions in a shared embedding space.
+It learns to encode images into feature vectors that capture semantic content
+by contrasting image-text pairs during training, enabling effective zero-shot
+classification and retrieval tasks.
+
+Subsequently, the high-dimensional CLIP embeddings are reduced to 32 dimensions
+using UMAP~\cite{umap} for computational efficiency and to facilitate
+clustering. UMAP (Uniform Manifold Approximation and Projection) is a nonlinear
+dimension reduction technique that preserves both local and global data
+structure by constructing a high-dimensional graph and optimizing a
+low-dimensional embedding to maintain the data's manifold structure, allowing
+effective clustering and visualization.
+
+This experimental setup evaluates the robustness of dynamic clustering methods
+under smooth brightness drift affecting the global appearance of the input
+images.
+
+The hyperparameters chosen for this experimental setup are as follows: $q =
+      200$, $\Delta = 100$ and $I=50$.
+
+\begin{figure}[H]
+      \centering
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/image_brightness/best_setting/graph.png}
+      \caption{Graphical evolution of Places-Brightness-Drift Experiment.}
+\end{figure}
+
+The results show an overall coherence between the clustering output and the
+underlying evolution of the data induced by the gradual brightness drift.
+Specifically, a distinct cluster emerges in the later stages of the stream,
+corresponding to the `over-brightened' images that appear almost entirely
+white. This can be interpreted as a meaningful splitting event from one of the
+initial clusters, driven by perceptual degradation due to excessive brightness.
+
+While the splitting is correctly identified at a high level also for cluster 0,
+it is not explicitly captured by the scoring mechanism used by the algorithm,
+which continues to classify the original cluster as a survivor. This limitation
+may be attributed to the algorithm's sensitivity threshold or to the nature of
+the drift itself, which occurs gradually and may not produce a sharply
+distinguishable transition in the embedding space.
+
+Despite this, the algorithm demonstrates a capacity to reflect the structural
+evolution of the data, with new clusters forming in response to accumulated
+visual changes. The experiment illustrates that, although dynamic clustering
+may not always detect smooth transformations as discrete events, it can still
+adapt to continuous appearance shifts.
+
+Additionally, the visual nature of the stream and the resulting cluster
+transitions provide a form of human-interpretable drift analysis: the
+appearance of distinct clusters corresponding to perceptually different image
+groups offers an intuitive and explainable representation of how the data is
+evolving. This highlights the potential of dynamic clustering not only as an
+unsupervised tracking tool, but also as a mechanism for supporting
+interpretability in scenarios involving smooth or continuous distributional
+shifts.
+
+\begin{figure}[H]
+      \centering
+      \includegraphics[width=0.75\textwidth]{my_images/experiment_results/image_brightness/best_setting/selected_rsamples.png}
+      \caption{Representative Samples of clusters of Brightness Data.}
+\end{figure}
+
+\begin{figure}[H]
+      \centering
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/image_brightness/best_setting/selected_spatial.png}
+      \caption{Spatial Evolution of clusters of Brightness Data.}
+\end{figure}
+
+\subsection{Typographical drift}\label{subsec:typographical_drift}
+To evaluate the robustness of dynamic clustering under linguistic noise, a
+subset of the 20 Newsgroups dataset~\cite{20newsgroups} was used, consisting of
+four categories: \emph{rec.autos}, \emph{comp.graphics}, \emph{sci.med}, and
+\emph{rec.sport.baseball}. These categories represent distinct topics, enabling
+clear cluster structure in the original space.
+
+The experimental stream was constructed in two phases. Initially, 100 clean
+documents per class were sampled to serve as a reference distribution.
+Subsequently, for each of three drift stages, 278 documents per class were
+sampled and subjected to varying levels of typographical corruption. The
+corruption was introduced using a synthetic noise function designed to simulate
+realistic typing errors through random character-level modifications, including
+insertions, deletions, replacements, and swaps. The severity of corruption was
+progressively increased during the experiment, resulting in more aggressive
+drift at later stages.
+
+Each text sample was embedded into a 384-dimensional semantic vector using the
+\texttt{all\allowbreak-MiniLM\allowbreak-L6\allowbreak-v2}
+model~\cite{sentence-transformers}, a transformer-based sentence encoder
+optimized for efficient semantic representation. Dimensionality was
+subsequently reduced to 32 using UMAP~\cite{umap} to facilitate clustering and
+reduce computational overhead.
+
+This setup emulates a scenario in which textual input quality degrades
+progressively while preserving underlying topical structure, offering a
+controlled test for evaluating the dynamic clustering algorithm to text data.
+
+The hyperparameters chosen for this experimental setup are as follows: $q =
+      200$, $\Delta = 100$ and $I=100$.
+
+\begin{figure}[H]
+      \centering
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/text_typos/best_setting/graph.png}
+      \caption{Graphical evolution of Text Typos Experiment.}
+\end{figure}
+
+The results indicate that the drift-induced cluster initially emerges as a
+split from \emph{cluster 2}. Throughout the period in which the textual content
+remains relatively intact, the algorithm successfully identifies a sequence of
+merging, resplitting, and remerging transitions. This demonstrates the method's
+ability to track gradual and reversible changes within the data distribution.
+
+Only when the text becomes significantly corrupted does the algorithm recognize
+a fully distinct new cluster, reflecting a more pronounced shift in the
+underlying data characteristics. This behavior suggests that the dynamic
+clustering approach is sensitive to the degree of drift and can differentiate
+between subtle perturbations and more substantial distributional changes.
+
+Overall, these findings highlight the algorithm's capacity to model complex
+temporal cluster dynamics in scenarios where data evolves progressively,
+supporting its applicability to real-world tasks involving incremental or
+partial data degradation, including applications in text data where content may
+gradually become corrupted or altered.
+
+\begin{figure}[H]
+      \centering
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/text_typos/best_setting/selected_spatial.png}
+      \caption{Graphical evolution of Text Typos Clusters.}
+\end{figure}
+
+\input{figures/text_typos_rsamples.tex}
+
+\section{Real Data}\label{sec:real_data}
+
+This section presents experiments conducted on real-world datasets to evaluate
+the practical applicability and robustness of the dynamic clustering algorithm
+in realistic scenarios. Unlike synthetic or induced drift datasets, where the
+nature and evolution of the drift are controlled and known, real data
+introduces natural variability, noise, and less predictable temporal patterns,
+offering a more challenging and representative testbed.
+
+Two distinct datasets are considered: one tabular dataset from the domain of
+network intrusion detection, and one image dataset capturing gradual visual
+variations in a collection of fruit photographs. These datasets are selected to
+cover different data modalities and to assess the algorithm's effectiveness in
+modeling cluster evolution where the underlying ground truth may be incomplete
+or ambiguous.
+
+By applying the dynamic clustering method to these real datasets, the aim is to
+observe how well the algorithm identifies meaningful structural changes in the
+data over time and whether it provides interpretable insights into temporal
+patterns without artificial drift induction.
 
 \subsection{KDD Cup 99}\label{subsec:kdd_data}
 The KDD Cup 1999 dataset~\cite{kdd99dataset} is a widely recognized benchmark
@@ -98,59 +318,51 @@ Normal traffic, Denial of Service DoS (e.g., \emph{smurf}, \emph{neptune}),
 User to Root U2R (e.g., \emph{buffer\_overflow}), Remote to Local R2L (e.g.,
 \emph{guess\_passwd}) or Probing (e.g., \emph{nmap}, \emph{satan}).
 
-\begin{figure}[h]
+The hyperparameters chosen for this experimental setup are as follows: $q =
+      100$, $\Delta = 5000$ and $I=5000$.
+
+\begin{figure}[H]
       \centering
       \includegraphics[width=1\textwidth]{my_images/experiment_results/kdd_data/best_setting/graph.png}
-      \caption{Graphical evolution of KDD-CUP-99 Data Experiment}
+      \caption{Graphical evolution of KDD-CUP-99 clusters.}
 \end{figure}
 
-\section{Images data}\label{sec:images_data}
+The results reveal a generally unstable behavior during the first iterations,
+with a high number of clusters being created over time. These clusters often
+lack continuity, showing minimal overlap with preceding or succeeding clusters,
+which indicates a limited temporal coherence in the output.
 
-\subsection{Brightness drift in places data}\label{subsec:brightness}
+However, this apparent instability partially reflects the inherent variability
+in the dataset itself. As shown in the labels history
+(Figure~\ref{fig:kdd_labels_history}), the data stream exhibits alternating
+phases of stability and rapid change. In particular, during periods when the
+stream consists predominantly of a single class label, the clustering results
+tend to be more stable, often producing persistent clusters. Conversely, in
+segments where the stream alternates frequently between multiple labels, the
+clustering output becomes more fragmented and unstable.
 
-The dataset consists of images from the Places dataset~\cite{placesdataset},
-focusing on two classes: \emph{mountain} and \emph{beach}. A reference set of
-500 images per class is selected. Then, for each of 5 batches, 100 images per
-class are sampled. In each batch, the brightness of the images is gradually
-increased using color jitter to simulate smooth and unidirectional visual
-drift.
-
-Each image is resized to $224 \times 224$ pixels before being embedded using
-the CLIP model~\cite{clip} to extract high-level feature representations. CLIP
-(Contrastive Language-Image Pretraining) is a neural network model trained to
-connect images and natural language descriptions in a shared embedding space.
-It learns to encode images into feature vectors that capture semantic content
-by contrasting image-text pairs during training, enabling effective zero-shot
-classification and retrieval tasks.
-
-Subsequently, the high-dimensional CLIP embeddings are reduced to 32 dimensions
-using UMAP~\cite{umap} for computational efficiency and to facilitate
-clustering. UMAP (Uniform Manifold Approximation and Projection) is a nonlinear
-dimension reduction technique that preserves both local and global data
-structure by constructing a high-dimensional graph and optimizing a
-low-dimensional embedding to maintain the data's manifold structure, allowing
-effective clustering and visualization.
-
-This experimental setup evaluates the robustness of dynamic clustering methods
-under smooth brightness drift affecting the global appearance of the input
-images.
-
-\begin{figure}[h]
+\begin{figure}[H]
       \centering
-      \includegraphics[width=1\textwidth]{my_images/experiment_results/image_brightness/best_setting/graph.png}
-      \caption{Graphical evolution of Places-Brightness-Drift Experiment}
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/kdd_data/label_history.png}
+      \caption{Labels history of KDD-CUP-99 Dataset.}
+      \label{fig:kdd_labels_history}
 \end{figure}
 
+This behavior suggests that the dynamic clustering algorithm is responsive to
+shifts in the underlying data distribution, even if it does not maintain strong
+temporal consistency throughout. The instability in the results may also be
+attributed to limitations of the macro-clustering component, which could be
+improved to enhance robustness. Nonetheless, the algorithm is capable of
+distinguishing phases of relative stability and transition in the data stream,
+which is a desirable property for applications in dynamic and evolving
+environments.
+
+%TODO: add plot of the macroclustering statisticcs to show that maybe macroclustering is not too good
 \subsection{Fruits}\label{subsec:fruits}
 
 A collected dataset of 2,420 RGB images of tangerines, each resized to $100
       \times 100$ pixels, was used to investigate dynamic clustering for images under
-real-world conditions. Initially, the dataset contains predominantly green to
-yellow tangerines, followed by the appearance of more orange and reddish
-specimens. In addition to this chromatic progression, slight variations in
-shape are also present. These gradual changes introduce distributional drift in
-the visual domain, making the dataset a representative real case study for
-evaluating the effectiveness of dynamic clustering methods.
+real-world conditions.
 
 To isolate the foreground objects and reduce background noise, automatic
 background segmentation was applied using the GrabCut algorithm~\cite{grabcut}.
@@ -162,98 +374,58 @@ Following segmentation, each image was encoded using a pretrained ResNet-50
 convolutional neural network~\cite{resnet}, producing high-dimensional visual
 feature embeddings. These embeddings were subsequently reduced to 64 dimensions
 using UMAP~\cite{umap} to facilitate efficient clustering and visualization.
-This experimental setup supports the analysis of cluster evolution in a
-structured image dataset with visually similar objects exhibiting gradual
-variations in color and background context.
 
-\begin{figure}[h]
+The hyperparameters chosen for this experimental setup are as follows: $q =
+      200$, $\Delta = 50$, and $I = 50$.
+
+To simulate a realistic deployment scenario, the first 200 images of the
+dataset are treated as reference data, representing the initial state of the
+system. The remaining 2,220 images are considered production data,
+progressively ingested by the dynamic clustering pipeline.
+
+\begin{figure}[H]
       \centering
       \includegraphics[width=1\textwidth]{my_images/experiment_results/fruits/best_setting/graph.png}
-      \caption{Graphical evolution of Fruits Images Experiment}
+      \caption{Graphical evolution of Fruits Images Experiment.}
 \end{figure}
 
-\section{Text data}\label{sec:text_data}
+The results indicate that the algorithm effectively captures the appearance of
+new tangerine types over time. Visual inspection of the clustered images
+reveals distinct characteristics associated with each cluster:
 
-\subsection{Typographical drift}\label{subsec:typographical_drift}
-To evaluate the robustness of dynamic clustering under linguistic noise, a
-subset of the 20 Newsgroups dataset~\cite{20newsgroups} was used, consisting of
-four categories: \textit{rec.autos}, \textit{comp.graphics}, \textit{sci.med},
-and \textit{rec.sport.baseball}. These categories represent distinct topics,
-enabling clear cluster structure in the original space.
+\begin{itemize}
+      \item \emph{Clusters 0 and 2}: Round yellow-green tangerines
+      \item \emph{Cluster 1}: Oval-shaped yellow-green tangerines
+      \item \emph{Cluster 3}: Round orange tangerines
+      \item \emph{Cluster 4}: Oval-shaped orange tangerines
+\end{itemize}
 
-The experimental stream was constructed in two phases. Initially, 100 clean
-documents per class were sampled to serve as a reference distribution.
-Subsequently, for each of three drift stages, 278 documents per class were
-sampled and subjected to varying levels of typographical corruption. The
-corruption was introduced using a synthetic noise function designed to simulate
-realistic typing errors through random character-level modifications, including
-insertions, deletions, replacements, and swaps. The severity of corruption was
-controlled by a parameter $\lambda \in \{0.1, 0.5, 0.9\}$, with higher values
-producing more aggressive drift. Errors were constrained by keyboard proximity
-rules to preserve plausibility.
+Similar to the previous experiment, the algorithm identifies only one of the
+two expected splits, which may be attributed to the sensitivity threshold of
+the method. This partial detection does not detract significantly from the
+results, as the emergence of the orange tangerines is still successfully
+recognized as a meaningful transition in the data stream.
 
-Each text sample was embedded into a 384-dimensional semantic vector using the
-\texttt{all\allowbreak-MiniLM\allowbreak-L6\allowbreak-v2}
-model~\cite{sentence-transformers}, a transformer-based sentence encoder
-optimized for efficient semantic representation. Dimensionality was
-subsequently reduced to 32 using UMAP~\cite{umap} to facilitate clustering and
-reduce computational overhead.
+As the data stream progresses, the dataset exhibits a gradual evolution in
+visual characteristics. Initially, the images consist primarily of green and
+yellow tangerines, while later segments include increasingly orange and reddish
+specimens. In parallel, subtle variations in shape further contribute to the
+evolving distribution. These gradual changes introduce a form of distributional
+drift in the visual domain, which the dynamic clustering method successfully
+tracks over time.
 
-This setup emulates a realistic scenario in which textual input quality
-degrades progressively while preserving underlying topical structure, offering
-a controlled test for evaluating the temporal adaptability of clustering
-algorithms.
+The effectiveness of the approach in capturing such shifts underlines its
+applicability to real-world scenarios where visual data distributions evolve
+slowly and nonlinearly.
 
-\begin{figure}[h]
+\begin{figure}[H]
       \centering
-      \includegraphics[width=1\textwidth]{my_images/experiment_results/text_typos/best_setting/graph.png}
-      \caption{Graphical evolution of Text Typos Experiment}
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/fruits/best_setting/selected_spatial.png}
+      \caption{Spatial Evolution of clusters of Fruit Images.}
 \end{figure}
 
-\subsection{Topics Evolution}\label{subsec:topics_evolution}
-
-To evaluate the behavior of dynamic clustering under topic distribution shifts,
-a subset of the 20Newsgroups dataset~\cite{20newsgroups} was used. Four topical
-categories were selected: \texttt{comp.graphics}, \texttt{rec.autos},
-\texttt{sci.med}, and \texttt{rec.sport.hockey}, corresponding respectively to
-labels $0$, $1$, $4$, and $3$. These topics represent distinct semantic areas
-and were chosen to ensure adequate inter-class diversity.
-
-Each document was embedded using the
-\texttt{all\allowbreak-MiniLM\allowbreak-L6\allowbreak-v2}
-model~\cite{sentence-transformers}, which produces compact and semantically
-meaningful vector representations of text. The resulting high-dimensional
-embeddings were then reduced to 16 dimensions using UMAP~\cite{umap} to enhance
-computational efficiency and preserve cluster structures in a low-dimensional
-space suitable for visualization and analysis.
-
-A reference set was formed by sampling a fixed number of documents per topic
-(e.g., 100 for \texttt{autos} and \texttt{med}, 50 for \texttt{graphics}).
-Then, across eight batches (B1 to B8), topic proportions were deliberately
-varied to simulate distribution shifts over time. This batch plan introduces
-scenarios such as topic emergence, disappearance, and reappearance. For
-instance, \texttt{rec.sport.hockey} (label 3) is entirely absent from the
-reference and early batches but gradually increases in presence, peaking in
-batch B7. Conversely, \texttt{rec.autos} (label 1) is prominent in the early
-stages but vanishes completely in the last three batches.
-
-\begin{table}[H]
+\begin{figure}[H]
       \centering
-      \begin{tabular}{lccccccccc}
-            \hline
-            \textbf{Topic (Label)} & Ref & B1  & B2  & B3  & B4  & B5  & B6  & B7  & B8  \\
-            \hline
-            \texttt{graphics (0)}  & 50  & 100 & 100 & 50  & 50  & 50  & 0   & 100 & 100 \\
-            \texttt{autos (1)}     & 100 & 100 & 100 & 100 & 50  & 50  & 0   & 0   & 0   \\
-            \texttt{med (4)}       & 100 & 50  & 0   & 0   & 50  & 50  & 100 & 100 & 50  \\
-            \texttt{hockey (3)}    & 0   & 0   & 50  & 100 & 100 & 100 & 150 & 50  & 100 \\
-            \hline
-      \end{tabular}
-      \caption{Batch-wise Sample Distribution (per topic)}
-\end{table}
-
-\begin{figure}[h]
-      \centering
-      \includegraphics[width=1\textwidth]{my_images/experiment_results/text_topics/best_setting/graph.png}
-      \caption{Graphical evolution of Text Topics Evolution Experiment}
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/fruits/best_setting/selected_rsamples.png}
+      \caption{Representative Samples of clusters of Fruit Images.}
 \end{figure}

@@ -1,0 +1,65 @@
+\chapter{Conclusions and Future Developments}\label{ch:conclusions}
+
+\section{Overview}\label{sec:overview}
+
+This thesis explored the problem of dynamic clustering in non-stationary data
+streams, where the underlying distribution evolves over time. In such settings,
+traditional static clustering methods fall short due to their inability to
+adapt to temporal changes and recurring structures.
+
+To address these challenges, a modular and adaptive clustering framework was
+developed, designed to maintain temporally coherent and interpretable cluster
+representations as the data evolves. Central to this framework is a typology of
+cluster transitions, such as \emph{survival}, \emph{absorption}, and
+\emph{splitting}, which enables a fine-grained analysis of structural changes
+between time steps. This was further extended to capture long-term recurrences
+through transitions such as \emph{reappearance}, \emph{remerge}, and
+\emph{resplit}, identified via graph-based analysis and temporal matching
+heuristics.
+
+Additionally, novel spatial proximity scores were introduced to measure the
+degree of overlap between clusters. In particular, the \emph{Spherical
+    Overlapping Score (SOS)} and the \emph{Effective Overlapping Score} provide
+geometry-aware, scale-invariant criteria to support transition detection. These
+metrics enhance the robustness and interpretability of cluster tracking,
+especially in scenarios involving gradual drift or recurring patterns.
+
+The overall architecture is designed for incremental use and supports
+memory-efficient summarization, visualization, and cluster-level reporting.
+Experiments demonstrated the effectiveness of the proposed framework in
+capturing the dynamic evolution of clustering structures over time, as well as
+its interpretability in practical scenarios.
+
+In summary, the thesis contributes a principled and interpretable approach to
+dynamic clustering, enabling the analysis of evolving structures in streaming
+data through a rich set of transition types and overlap metrics.
+
+\section{Future Developments}\label{sec:future_developments}
+
+While the proposed framework provides a structured and interpretable approach
+to dynamic clustering, several limitations remain, suggesting opportunities for
+future work.
+
+A key area for extension involves the representation of density-based
+clustering results. Algorithms such as DBSCAN and HDBSCAN, which are commonly
+used in practice, do not yield explicit centroids, making the existing overlap
+metrics unsuitable. Future developments could focus on defining compact
+representations specific to density-based clusters and designing new overlap
+scores that reflect their spatial and structural characteristics.
+
+The modular architecture of the proposed framework presents another avenue for
+future enhancement. Each core component can be independently modified or
+extended. In particular, future work could explore more advanced triggering
+strategies, potentially informed by drift detection methods, to better identify
+when significant changes in the data stream warrant re-clustering. This design
+flexibility also enables the integration of alternative clustering techniques
+and distance functions, allowing the framework to be adapted to a wide range of
+application domains.
+
+Another promising direction is the forecasting of cluster transitions.
+Transition prediction would move the system beyond reactive analysis toward
+proactive modeling. Since the current framework already produces rich temporal
+metadata describing cluster dynamics, it offers a strong foundation for
+learning temporal patterns and anticipating future changes in the clustering
+structure.
+

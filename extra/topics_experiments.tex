@@ -1,0 +1,49 @@
+\section{Text data}\label{sec:text_data}
+
+\subsection{Topics Evolution}\label{subsec:topics_evolution}
+
+To evaluate the behavior of dynamic clustering under topic distribution shifts,
+a subset of the 20Newsgroups dataset~\cite{20newsgroups} was used. Four topical
+categories were selected: \texttt{comp.graphics}, \texttt{rec.autos},
+\texttt{sci.med}, and \texttt{rec.sport.hockey}, corresponding respectively to
+labels $0$, $1$, $4$, and $3$. These topics represent distinct semantic areas
+and were chosen to ensure adequate inter-class diversity.
+
+Each document was embedded using the
+\texttt{all\allowbreak-MiniLM\allowbreak-L6\allowbreak-v2}
+model~\cite{sentence-transformers}, which produces compact and semantically
+meaningful vector representations of text. The resulting high-dimensional
+embeddings were then reduced to 16 dimensions using UMAP~\cite{umap} to enhance
+computational efficiency and preserve cluster structures in a low-dimensional
+space suitable for visualization and analysis.
+
+A reference set was formed by sampling a fixed number of documents per topic
+(e.g., 100 for \texttt{autos} and \texttt{med}, 50 for \texttt{graphics}).
+Then, across eight batches (B1 to B8), topic proportions were deliberately
+varied to simulate distribution shifts over time. This batch plan introduces
+scenarios such as topic emergence, disappearance, and reappearance. For
+instance, \texttt{rec.sport.hockey} (label 3) is entirely absent from the
+reference and early batches but gradually increases in presence, peaking in
+batch B7. Conversely, \texttt{rec.autos} (label 1) is prominent in the early
+stages but vanishes completely in the last three batches.
+
+\begin{table}[H]
+      \centering
+      \begin{tabular}{lccccccccc}
+            \hline
+            \textbf{Topic (Label)} & Ref & B1  & B2  & B3  & B4  & B5  & B6  & B7  & B8  \\
+            \hline
+            \texttt{graphics (0)}  & 50  & 100 & 100 & 50  & 50  & 50  & 0   & 100 & 100 \\
+            \texttt{autos (1)}     & 100 & 100 & 100 & 100 & 50  & 50  & 0   & 0   & 0   \\
+            \texttt{med (4)}       & 100 & 50  & 0   & 0   & 50  & 50  & 100 & 100 & 50  \\
+            \texttt{hockey (3)}    & 0   & 0   & 50  & 100 & 100 & 100 & 150 & 50  & 100 \\
+            \hline
+      \end{tabular}
+      \caption{Batch-wise Sample Distribution (per topic).}
+\end{table}
+
+\begin{figure}[H]
+      \centering
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/text_topics/best_setting/graph.png}
+      \caption{Graphical evolution of Text Topics Evolution Experiment.}
+\end{figure}

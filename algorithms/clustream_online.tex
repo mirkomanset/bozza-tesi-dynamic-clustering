@@ -1,17 +1,17 @@
 % ---- Algorithm: Online Micro-Clustering (Self-Contained) ----
-\begin{algorithm}[h]
-    \caption{Online Micro-Clustering in CluStream}
-    \label{alg:clustream}
+\begin{algorithm}[H]
+    \caption{Online Micro-Clustering in CluStream.}
+    \label{alg:clustream_online}
     \begin{algorithmic}[1]
-        \REQUIRE Incoming data point $\mathbf{x}$ with timestamp $t$, micro-clusters $\mathcal{MC}$, max clusters $q$, time window $\Delta$
+        \REQUIRE Incoming data point $\mathbf{x}$ with timestamp $t$, micro-clusters $\mathcal{MC}$, max clusters $M$, time window $\Delta$
         \ENSURE Updated micro-cluster set $\mathcal{MC}$
 
-        \STATE Find nearest micro-cluster $MC_j \in \mathcal{MC}$ with centroid $\mu_j$
-        \IF{$\text{dist}(\mathbf{x}, \mu_j) < \text{threshold}(MC_j)$}
+        \STATE Find nearest micro-cluster $MC_j \in \mathcal{MC}$ with centroid $\boldsymbol{\mu}_j$
+        \IF{$\text{dist}(\mathbf{x}, \boldsymbol{\mu}_j) < \text{threshold}(MC_j)$}
         \STATE Assign $\mathbf{x}$ to $MC_j$ using~\ref{eq:clustream_insert}
         \ELSE
         \STATE Create new micro-cluster $MC_{new}$ for $\mathbf{x}$ using~\ref{eq:clustream_create}
-        \IF{$|\mathcal{MC}| < q$}
+        \IF{$|\mathcal{MC}| < M$}
         \STATE Add $MC_{new}$ to $\mathcal{MC}$
         
         \ELSE

@@ -5,18 +5,16 @@ problem. It begins with the introduction of a new class of transitions that
 incorporates the recurrence of clusters over time, enabling a more realistic
 modeling of evolving data streams. A new formulation of overlapping scores is
 then proposed for both spherical and Gaussian clusters, allowing for an easy
-thresholding for detecting overlapping between clusters. In addition, a
-triggering mechanism based on the CluStream~\cite{clustream} micro-clustering
-algorithm is introduced to detect significant structural changes in the data.
-The chapter concludes with a detailed description of the framework's
-architecture, outlining its components and their interactions in supporting
-adaptive and interpretable streaming clustering.
+thresholding for detecting overlapping between clusters. The chapter concludes
+with a detailed description of the framework's architecture, outlining its
+components and their interactions in supporting adaptive and interpretable
+dynamic clustering.
 
 \section{Extended Transitions}\label{sec:extended_transitions}
 
 To more accurately capture the dynamic evolution of clusters over time, this
 section introduces an extension to the traditional notion of transitions.
-Instead of relying solely on pairwise comparisons or aggregate statistics,
+Instead of relying only on pairwise comparisons or aggregate statistics,
 transitions are modeled using a structured and interpretable representation. As
 described in MEC~\cite{mec}, one effective approach is to represent transitions
 between two clustering results as a \textbf{bipartite graph}. In this graph,
@@ -95,21 +93,46 @@ types are introduced: \textbf{reappearance}, \textbf{remerge}, and
 \textbf{resplit}.
 
 \begin{itemize}
-      \item \textbf{Reappearance} occurs when a cluster that previously
-            disappeared re-emerges after a delay. To detect this, information
-            about disappeared clusters is retained. If a new cluster in a future
-            timestep significantly overlaps with one of these stored clusters, it
-            is classified as a reappearance rather than a new appearance.
+      \item \textbf{Reappearance}: A cluster that previously disappeared
+            re-emerges after some delay. Formally, let $C_i^t$ be a cluster
+            such that $C_i^t \rightarrow \emptyset$. Then $C_j^\tau$ with $\tau > t$
+            is said to be a reappearance of $C_i^t$ if:
+            \[
+                  C_i^t \circledast C_j^\tau.
+            \]
+            This condition distinguishes reappearance from pure appearance by matching the
+            new cluster to a previously disappeared one.
 
-      \item \textbf{Remerge} describes a situation in which a previously
-            merged cluster splits and, at a later point, its components reassemble
-            into a similar structure. The system tracks the identities of the
-            original components, allowing for recognition of this reformation.
+      \item \textbf{Remerge}: This describes the case in which a previously
+            split cluster reassembles after some time. Let $C_i^t$ be a cluster
+            that undergoes a split:
+            \[
+                  C_i^t \rightarrow \{C_1^{t+1}, \dots, C_v^{t+1}\}.
+            \]
+            Suppose that these clusters $\{C_1^{t+1}, \dots, C_v^{t+1}\}$ persist over time
+            up to the time $\tau - 1$, retaining their identity, and eventually undergo a
+            merge at time $\tau > t + 1$:
+            \[
+                  \{C_1^{\tau - 1}, \dots, C_v^{\tau - 1}\} \rightarrow C_j^{\tau}.
+            \]
+            Then $C_j^{\tau}$ is said to be a \emph{remerge} of $C_i^t$ if:
+            \[
+                  C_i^t \circledast C_j^{\tau}.
+            \]
 
-      \item \textbf{Resplit} is the converse case, where clusters that
-            previously resulted from a split later recombine. If the new merged
-            cluster shows significant overlap with the original parent cluster,
-            the event is identified as a resplit.
+      \item \textbf{Resplit}: This is the converse of remerge. Let $\{C_1^t, \dots, C_u^t\}$ be clusters that were previously merged:
+            \[
+                  \{C_1^t, \dots, C_u^t\} \rightarrow C_i^{t+1},
+            \]
+            and suppose that $C_i^{t+1}$ survives up to time $ \tau - 1 $ and is later
+            split at time $\tau > t+1$ into:
+            \[
+                  C_i^{\tau - 1} \rightarrow \{C_1^{\tau}, \dots, C_u^{\tau}\}.
+            \]
+            The event is identified as a \emph{resplit} if:
+            \[
+                  \forall j \in \{1, \dots, u\}, \quad C_j^t \circledast C_j^{\tau}.
+            \]
 \end{itemize}
 
 By incorporating these extended transition types, the framework enables not
@@ -124,43 +147,49 @@ understanding cluster evolution. This section introduces two novel
 formulations: one tailored for spherical clusters, and one for Gaussian
 clusters with arbitrary covariance structures.
 
-\subsubsection*{Custom Overlapping Score for Spherical Clusters}
+\subsubsection*{Spherical Overlapping Score}
 
-For clusters with approximately spherical shapes, the following \textbf{Custom
-      Overlapping Score (CustomOS)} is proposed:
+For clusters $ C_i $ and $ C_j $ exhibiting approximately spherical geometry,
+the \textbf{Spherical Overlapping Score (SOS)} is introduced to quantitatively
+assess their spatial proximity:
 
-\begin{equation}\label{eq:custom_os}
-      \text{CustomOS}(c_1, c_2) = 2^{- \frac{d(\mu_1, \mu_2)}{r_1 + r_2}}
+\begin{equation}\label{eq:sos}
+      \text{SOS}(C_i, C_j) = 2^{- \frac{||\boldsymbol{\mu}_i, \boldsymbol{\mu}_j||_2}{r_i + r_j}}
 \end{equation}
 
 where:
 \begin{itemize}
-      \item $ d(\mu_1, \mu_2) $ is the Euclidean distance between the centers of clusters $ c_1 $ and $ c_2 $,
-      \item $ r_1 $ and $ r_2 $ represent the respective radii of the clusters.
+      \item $||\boldsymbol{\mu}_i - \boldsymbol{\mu}_j||_2$ denotes the Euclidean distance between the centers
+            (means) $\boldsymbol{\mu}_i$ and $\boldsymbol{\mu}_j$ of clusters $C_i$ and $C_j$, respectively,
+      \item $r_i$ and $r_j$ are the estimated radii of clusters $C_i$ and $C_j$,
+      \item The denominator $(r_i + r_j)$ serves to normalize the distance by the combined
+            scale of the clusters,
+      \item The exponential form ensures that SOS values lie in $(0, 1]$, decaying smoothly
+            as clusters become more distant.
 \end{itemize}
 
 \textbf{Properties and Interpretation:}
 \begin{itemize}
       \item The score is bounded in $ (0, 1] $, where:
             \begin{itemize}
-                  \item $ \text{CustomOS} \to 0 $: the clusters are very distant.
-                  \item $ \text{CustomOS} = 0.5 $: the clusters are tangent, i.e., $ d(\mu_1, \mu_2) = r_1 + r_2 $.
-                  \item $ \text{CustomOS} = 1 $: the clusters are completely overlapped, i.e., $ d(\mu_1, \mu_2) = 0 $.
+                  \item $ \text{SOS} \to 0 $: the clusters are very distant i.e., $ ||\boldsymbol{\mu}_i, \boldsymbol{\mu}_j||_2 \rightarrow \infty $.
+                  \item $ \text{SOS} = 0.5 $: the clusters are tangent, i.e., $ ||\boldsymbol{\mu}_i, \boldsymbol{\mu}_j||_2 = r_i + r_j $.
+                  \item $ \text{SOS} = 1 $: the clusters are completely overlapped, i.e., $ ||\boldsymbol{\mu}_i, \boldsymbol{\mu}_j||_2 = 0 $.
             \end{itemize}
 
       \item The score decays exponentially with the normalized inter-cluster distance,
-            providing a \textit{scale-invariant} measure of similarity.
+            providing a \emph{scale-invariant} measure of similarity.
 
       \item The score can be interpreted as a \textbf{probability-like value} quantifying
             the likelihood that two clusters are evolutionarily related. The most uncertain
-            case is when the clusters are tangent ($ \text{CustomOS} = 0.5 $), where:
+            case is when the clusters are tangent ($ \text{SOS} = 0.5 $), where:
             \begin{itemize}
-                  \item $ c_2 $ could be the evolution of $ c_1 $ with a large center shift (i.e., $ d = r_1 + r_2 $),
-                  \item or $ c_2 $ could represent a newly formed cluster that emerged near $ c_1 $.
+                  \item $ C_j $ could be the evolution of $ C_i $ with a large center shift,
+                  \item or $ C_j $ could represent a newly formed cluster that emerged near $ C_i $.
             \end{itemize}
 
       \item Thanks to these properties, a natural threshold for deciding overlap is $
-                  \epsilon = 0.5 $. Scores above this suggest potential continuity or evolution;
+                  \varepsilon = 0.5 $: scores above this suggest potential continuity or evolution;
             scores below indicate separation.
 
       \item The score requires only the cluster centers and radii to compute, which makes
@@ -171,59 +200,60 @@ where:
 
 \subsubsection*{Effective Overlapping Score for Gaussian Clusters}
 
-Building upon the idea of the \textit{Custom Overlapping
-      Score}~(\ref{eq:custom_os}), which assumes spherical symmetry, the
-\textbf{Effective Overlapping Score (EffectiveOS)} generalizes the concept to
-clusters modeled as multivariate Gaussian distributions. This allows for the
-consideration of directional variability and correlated features by
-incorporating covariance structure into the overlap estimation.
+Building upon the idea of the \emph{Spherical Overlapping
+      Score}~(\ref{eq:sos}), which assumes spherical symmetry, the \textbf{Effective
+      Overlapping Score (EffectiveOS)} generalizes the concept to clusters modeled as
+multivariate Gaussian distributions. This allows for the consideration of
+directional variability and correlated features by incorporating covariance
+structure into the overlap estimation.
 
 The \textbf{EffectiveOS} is defined as:
 
 \begin{equation}
-      \text{EffectiveOS} = 2^{\frac{-d_M(\mu_1, \mu_2)}{\text{RMSSize}_1 + \text{RMSSize}_2}}
+      \text{EffectiveOS} = 2^{\frac{-d_M(\boldsymbol{\mu}_i, \boldsymbol{\mu}_j)}{\text{RMSSize}_i + \text{RMSSize}_j}}
 \end{equation}
 
-where $ d_M(\mu_1, \mu_2) $ is the Mahalanobis distance between the cluster
+where $ d_M(\boldsymbol{\mu}_i, \boldsymbol{\mu}_j) $ is the Mahalanobis distance between the cluster
 means:
 
 \begin{align}
-      d_M(\mu_1, \mu_2) & = \sqrt{(\mu_1 - \mu_2)^\top \Sigma_{12}^{-1} (\mu_1 - \mu_2)} \\
-      \Sigma_{12}       & = \frac{\Sigma_1 + \Sigma_2}{2}
+      d_M(\boldsymbol{\mu}_i, \boldsymbol{\mu}_j) & = \sqrt{(\boldsymbol{\mu}_i - \boldsymbol{\mu}_j)^\top \Sigma_{ij}^{-1} (\boldsymbol{\mu}_i - \boldsymbol{\mu}_j)} \\
+      \Sigma_{ij}       & = \frac{\Sigma_i + \Sigma_j}{2}
 \end{align}
 
-The term $ \text{RMSSize}_j $ represents the \textbf{root mean square size} of
-cluster $ j $, capturing its generalized radius along principal directions:
+The term $ \text{RMSSize}_i $ represents the \textbf{root mean square size} of
+cluster $ C_i $, capturing its generalized radius along principal directions:
 
 \begin{align}
-      \text{RMSSize}_j & = \sqrt{\frac{1}{n} \sum_{i=1}^n a_i^2} \\
-      a_i              & = \chi^2_\alpha \sqrt{\lambda_i^j}
+      \text{RMSSize}_i & = \sqrt{\frac{1}{d} \sum_{\ell=1}^d a_\ell^2} \\
+      a_\ell           & = \chi^2_\alpha \sqrt{\lambda_\ell^i}
 \end{align}
 
 where:
 \begin{itemize}
-      \item $ \lambda_i^j $ are the eigenvalues of the covariance matrix $ \Sigma_j $,
-            corresponding to the variance along each principal axis of cluster $ j $,
+      \item $ \lambda_\ell^i $ are the eigenvalues of the covariance matrix $ \Sigma_i $,
+            representing the variance along each principal axis of cluster $ C_i $,
+      \item $ d $ is the dimensionality of the data,
       \item $ \chi^2_\alpha $ is the critical value of the chi-squared distribution at
-            confidence level $ \alpha $, scaling the eigenvalues to a desired confidence boundary.
+            confidence level $ \alpha $, used to scale the eigenvalues to a desired confidence boundary.
 \end{itemize}
 
 \textbf{Properties and Intuition:}
 \begin{itemize}
       \item \textbf{Generalization of Spherical Case:} When covariance matrices are multiples
             of the identity, the Mahalanobis distance reduces to the Euclidean distance, and
-            RMSSize approximates the radius, thus reducing to the CustomOS formulation.
+            RMSSize approximates the radius, thus reducing to the SOS formulation.
       \item \textbf{Covariance-aware Distance:} The Mahalanobis distance accounts for
             feature correlation and direction-dependent spread, making it suitable for ellipsoidal clusters.
       \item \textbf{Confidence-aware Scaling:} RMSSize uses the eigenvalue spectrum scaled
             by a chi-squared factor to describe the effective spatial extent of a Gaussian cluster
             with statistical rigor.
-      \item \textbf{Probabilistic Interpretation:} Like CustomOS, the EffectiveOS is bounded
+      \item \textbf{Probabilistic Interpretation:} Like SOS, the EffectiveOS is bounded
             in $ (0, 1] $ and can be interpreted as a probability-like measure of overlap or evolution
             likelihood.
-      \item \textbf{Streaming-Friendly Implementation:} Although more complex than the CustomOS,
+      \item \textbf{Streaming-Friendly Implementation:} Although more complex than the SOS,
             the EffectiveOS still relies only on statistical summaries (means, covariances, and eigenvalues),
-            making it applicable in streaming scenarios where raw data is discarded after summarization.
+            making it applicable in streaming scenarios..
 \end{itemize}
 
 \section{Proposed Framework}\label{sec:proposed_framework}
@@ -236,7 +266,7 @@ a data stream.
 The streaming clustering component employs the CluStream
 algorithm~\cite{clustream}, which supports distinct online and offline
 clustering phases and allows the offline phase to be triggered on demand. Each
-submodule—namely online, offline, and triggering—is also explicitly
+submodule, namely online, offline, and triggering, is also explicitly
 represented.
 
 The original algorithm's offline phase uses K-means with a fixed number of
@@ -250,56 +280,69 @@ knowledge of $ k $.
 It is noted that in the original CluStream algorithm, the offline phase is
 triggered based on a fixed time interval. As previously
 stated,~\cite{namitha_dynamic_clustering_2} implements a mechanism that
-triggers the offline phase using the Page-Hinkley algorithm to monitor the
-distance between incoming data points and their closest microclusters.
+triggers the offline phase using the Page-Hinkley algorithm~\cite{page_hinkley}
+to monitor the distance between incoming data points and their closest
+microclusters.
 
-In this work, a new triggering strategy specifically tailored to the CluStream
-online phase is proposed. This strategy initiates the offline phase when the
-number of significant changes in the online phase exceeds a predefined
-threshold. A significant change is defined as either the deletion of an old
-microcluster or the merging of existing microclusters, which occurs when a new
-microcluster must be created to accommodate an incoming data point.
+In the present implementation, consistent with the original CluStream
+algorithm, the offline phase is triggered after processing a fixed-size window
+of incoming data points. This approach ensures regular macroclustering updates
+while maintaining computational simplicity and avoiding the overhead associated
+with more complex monitoring strategies. Thanks to the modular nature of the
+proposed dynamic clustering framework, this triggering mechanism can be easily
+replaced or extended to accommodate alternative strategies, such as adaptive or
+data-driven methods.
+
+Moreover, coherently with the drift detection setup, the system distinguishes
+between a reference phase and a production phase. During the reference phase, a
+clean, stable portion of the data is used to initialize the model. In this
+stage, the deletion of microclusters is disabled to preserve the structure of
+the reference distribution. Additionally, the triggering mechanism is called
+only once at the end of the reference window to generate an initial
+macroclustering. Once the production phase begins and new data starts streaming
+in, the triggering strategy is applied at regular fixed-size intervals,
+allowing the macroclustering to adapt over time.
 
 To better understand the workflow and responsibilities within the framework,
-the following subsections describe the core modules and their roles:
+the following paragraphs describe the core modules and their roles:
 
-\begin{itemize}
+\paragraph{Online Phase (Microclustering):} The online module handles real-time summarization of the stream into
+microclusters. A microcluster is a compact structure that captures summary
+statistics (e.g., count, linear sum, and squared sum) of nearby data points in
+the feature space. This process compresses the incoming data into a manageable
+set of meaningful summaries while preserving essential distributional
+characteristics. It ensures that data is processed with low latency and
+prepares it for more complex downstream analysis.
 
-      \item \textbf{Online Phase (Microclustering):} The online module handles real-time
-            summarization of the stream into microclusters. A microcluster is a compact
-            structure that captures summary statistics (e.g., count, linear sum, and squared sum)
-            of nearby data points in the feature space. This process compresses the incoming data
-            into a manageable set of meaningful summaries while preserving essential distributional
-            characteristics. It ensures that data is processed with low latency and prepares it
-            for more complex downstream analysis.
+\paragraph{Triggering Strategy:} Since performing macroclustering at every step would be inefficient, this
+module decides when to invoke the offline phase. It monitors the evolution of
+microclusters and can be based on fixed time intervals, statistical change
+detection or other metric. The triggering strategy ensures a balance between
+computational efficiency and responsiveness to changes in the data.
 
-      \item \textbf{Triggering Strategy:} Since performing macroclustering at every step
-            would be inefficient, this module decides when to invoke the offline phase.
-            It monitors the evolution of microclusters and can be based on fixed time intervals,
-            statistical change detection. The triggering strategy ensures a balance between
-            computational efficiency and responsiveness to changes in
-            the data.
+\paragraph{Offline Phase (Macroclustering):} When triggered, this module clusters the current set of microclusters to
+produce macroclusters that are higher-level structures that summarize broader
+data trends. Algorithms such as K-Means or Gaussian Mixture Models may be
+applied to the centers of microclusters. This step extracts interpretable
+patterns from the stream and forms the basis for cluster tracking.
 
-      \item \textbf{Offline Phase (Macroclustering):} When triggered, this module clusters the
-            current set of microclusters to produce macroclusters—higher-level structures that
-            summarize broader data trends. Algorithms such as K-Means or Gaussian Mixture
-            Models may be applied to the weighted centers of microclusters. This step extracts
-            interpretable patterns from the stream and forms the basis for cluster tracking.
+\paragraph{History:} This module is specifically responsible for maintaining minimal yet sufficient
+information about past macroclusters in order to detect complex long-term
+transitions, namely \emph{reappearance}, \emph{remerge}, and \emph{resplit}.
+Instead of storing the full stream or detailed cluster content, it archives
+only essential descriptors (such as centroids, radii or covariance matrices,
+and timestamps) of disappeared or transformed clusters. This historical memory
+allows the tracking module to compare newly formed clusters with previous ones
+and identify structural recurrences, enabling a deeper understanding of
+temporal cluster dynamics.
 
-      \item \textbf{History:} This module is specifically responsible for maintaining minimal
-            yet sufficient information about past macroclusters in order to detect complex long-term
-            transitions, namely \emph{reappearance}, \emph{remerge}, and \emph{resplit}.
-            Instead of storing the full stream or detailed cluster content, it archives only
-            essential descriptors (such as centroids, radii, and timestamps) of disappeared or
-            transformed clusters. This historical memory allows the tracking module to compare
-            newly formed clusters with previous ones and identify structural recurrences, enabling
-            a deeper understanding of temporal cluster dynamics while ensuring low memory overhead.
-
-      \item \textbf{Tracking:} The tracking module compares macroclusters across time to detect
-            how clusters evolve. By computing overlap scores (e.g., CustomOS for spherical clusters
-            or EffectiveOS for Gaussian ones) it identifies transitions.
-
-\end{itemize}
+\paragraph{Tracking:} The tracking module compares macroclusters across time to monitor their
+evolution. It computes overlap scores using \emph{SOS} for spherical clusters
+of \emph{EffectiveOS} for Gaussian-shaped clusters. Based on these scores, the
+module identifies the transitions by evaluating how clusters relate to one
+another temporally. This information enables the reconstruction of cluster
+histories, facilitating the interpretation of dynamic patterns and structural
+changes within evolving data.
 
 \input{figures/architecture.tex}
 
@@ -310,22 +353,14 @@ maintaining interpretability and scalability.
 The final \textbf{Report}, consolidates the output of the entire framework into
 a comprehensive summary. It includes:
 \begin{itemize}
-      \item A table showing the status and properties of each macrocluster at every
-            iteration.
-      \item A table listing all detected transitions (e.g., splits, merges, survivals,
-            reappearances).
       \item A graph-based visualization of transitions across all time points, extending
             the bipartite structure into a multi-step representation.
       \item A spatial visualization of the macrocluster evolution across iterations,
             showing changes in position and shape over time.
       \item A curated collection of representative data samples for each cluster at each
             timestamp.
-      \item A series of quality plots evaluating the compactness and separation of
-            macroclusters at every macroclustering step.
-      \item A timeline plot that counts the number of updates performed in the online phase
-            at the microcluster level, providing insight into streaming activity and drift.
 \end{itemize}
 
-This rich reporting structure not only aids in interpretation and debugging but
+This reporting structure not only aids in interpretation and debugging but
 also enables users to analyze the evolution of data structures and validate the
 clustering process both qualitatively and quantitatively.

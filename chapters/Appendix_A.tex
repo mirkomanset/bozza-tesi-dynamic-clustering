@@ -1,24 +1,26 @@
-\chapter{Results}\label{ch:results}
+\chapter{Appendix A}
+
+\section{Hyperparameter Analysis}\label{sec:hyperparameter_analysis}
 In this section, various hyperparameters are tested across all datasets to
 evaluate their impact on the final tracking results. Specifically, different
 values of the overlapping threshold and window size are experimented with
 within the algorithm. Additionally, an interpretation of the confidence
 parameter and its influence on the outcomes is provided.
 
-\section{Overlapping Threshold}
+\subsection{Overlapping Threshold}
 To assess how overlap sensitivity affects transition detection, a range of
-values for $\epsilon$ was evaluated: $\epsilon \in \{0.1, 0.2, \dots, 0.9\}$.
+values for $\varepsilon$ was evaluated: $\varepsilon \in \{0.1, 0.2, \dots, 0.9\}$.
 
 \begin{itemize}
-      \item $\epsilon = 0.5$ (default): Offers balanced detection of cluster
+      \item $\varepsilon = 0.5$ (default): Offers balanced detection of cluster
             transitions and aligns with the design of the Effective Overlapping Score.
-      \item Lower values (e.g., $\epsilon = 0.1, 0.2, 0.3$): Increase overlap tolerance,
-            enhancing sensitivity but risking instability due to spurious transitions.
-      \item Higher values (e.g., $\epsilon = 0.7, 0.8, 0.9$): Enforce stricter transition
-            criteria, improving precision at the cost of recall.
+      \item Lower values: Increase overlap tolerance, enhancing sensitivity but risking
+            instability due to spurious transitions.
+      \item Higher values: Enforce stricter transition criteria, improving precision at the
+            cost of recall.
 \end{itemize}
 
-The threshold parameter $\epsilon$ functions analogously to a \textit{decision
+The threshold parameter $\varepsilon$ functions analogously to a \emph{decision
       boundary} in classification tasks. In binary classification, models often
 output probability scores indicating the likelihood that an input belongs to a
 particular class. A decision threshold, commonly set at 0.5, determines how
@@ -27,18 +29,19 @@ threshold alters the balance between false positives and false negatives:
 lowering the threshold increases sensitivity (recall) at the expense of
 precision, while raising it enhances precision but may reduce recall.
 
-In a similar manner, the parameter $\epsilon$ governs the sensitivity of transition
-detection by specifying a cutoff on the degree of overlap between successive
-clusters. A lower value of $\epsilon$ allows more transitions to be detected,
-including marginal or ambiguous ones, thereby increasing recall. Conversely, a
-higher value of $\epsilon$ enforces stricter overlap criteria, reducing the
-likelihood of false positives but potentially omitting subtle transitions.
+In a similar manner, the parameter $\varepsilon$ governs the sensitivity of
+transition detection by specifying a cutoff on the degree of overlap between
+successive clusters. A lower value of $\varepsilon$ allows more transitions to be
+detected, including marginal or ambiguous ones, thereby increasing recall.
+Conversely, a higher value of $\varepsilon$ enforces stricter overlap criteria,
+reducing the likelihood of false positives but potentially omitting subtle
+transitions.
 
-Both $\epsilon$ and classification decision boundaries serve as post hoc control
-mechanisms that can be tuned to reflect application-specific trade-offs between
-false positives and false negatives. The appropriate choice of $\epsilon$ should
-therefore be guided by the cost associated with each type of error in the
-target domain.
+Both $\varepsilon$ and classification decision boundaries serve as post hoc
+control mechanisms that can be tuned to reflect application-specific trade-offs
+between false positives and false negatives. The appropriate choice of
+$\varepsilon$ should therefore be guided by the cost associated with each type of
+error in the target domain.
 
 This parameter influences only the tracking module of the algorithm and does
 not affect the streaming clustering component. As a result, modifying it does
@@ -49,16 +52,10 @@ confined to the edges, while the nodes remain unchanged.
 \begin{figure}[H]
       \centering
       \includegraphics[width=1\textwidth]{my_images/experiment_results/kdd_data/thresholds/threshold_lines.png}
-      \caption{Transition Trends on KDD data}
+      \caption{Transition Trends on different threshold values on KDD data.}
 \end{figure}
 
-\begin{figure}[H]
-      \centering
-      \includegraphics[width=1\textwidth]{my_images/experiment_results/fruits/thresholds/threshold_lines.png}
-      \caption{Transition Trends on Fruit Images Data}
-\end{figure}
-
-\section{Streaming Clustering Time Window}
+\subsection{Streaming Clustering Time Window}
 
 The \texttt{time\_window} parameter controls how long microclusters are
 retained. Its value was adapted to the nature of each dataset, reflecting the
@@ -79,8 +76,14 @@ is required due to resource constraints. Notably, microclusters that fall
 outside the current window are not automatically discarded; they can persist
 over extended periods, provided they continue to receive new data points. In
 such cases, the window size does not act as a strict time-to-live mechanism,
-but rather as a criterion for prioritizing the removal of stale or inactive
+but rather as a criterion for prioritizing the removal of inactive
 microclusters.
+
+\begin{figure}[H]
+      \centering
+      \includegraphics[width=1\textwidth]{my_images/experiment_results/fruits/time_windows/time_window_lines.png}
+      \caption{Microcluster updates on different time windows on Fruit Data.}
+\end{figure}
 
 In contrast to the Overlapping Threshold, this parameter directly affects the
 behavior of the streaming clustering algorithm. As a result, it influences not
@@ -88,8 +91,8 @@ only the formation of microclusters and macroclusters, but also the final
 tracking output. When examining the graph representation, this leads to changes
 in the nodes themselves, which in turn impact the structure of the edges.
 
-\section{Confidence Level in Gaussian Mixture Modeling}
-In all experiments, the confidence parameter \(\alpha\) in the Gaussian mixture
+\subsection{Confidence Level in Gaussian Mixture Modeling}
+In all experiments, the confidence parameter $\alpha$ in the Gaussian mixture
 model is set to 0.9. While this value was not varied systematically, it aligns
 with standard practice and reflects a preference for maintaining a high degree
 of confidence in the compactness of each Gaussian cluster.
